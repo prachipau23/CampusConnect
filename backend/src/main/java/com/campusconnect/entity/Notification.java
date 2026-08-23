@@ -26,12 +26,13 @@ public class Notification {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private EntityType entityType;
+    @Column(name = "target_entity_type", nullable = false)
+    private EntityType targetEntityType;
 
-    private Long entityId;
+    @Column(name = "target_entity_id")
+    private Long targetEntityId;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     @Builder.Default
     private boolean read = false;
 
