@@ -1,66 +1,74 @@
 package com.campusconnect.service;
 
 import com.campusconnect.entity.Circle;
-import com.campusconnect.entity.CircleMember;
+import com.campusconnect.entity.CircleMembership;
 import com.campusconnect.entity.User;
-import com.campusconnect.repository.CircleMemberRepository;
+import com.campusconnect.repository.CircleMembershipRepository;
 import com.campusconnect.repository.CircleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.campusconnect.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class CircleService {
 
-    @Autowired
-    private CircleRepository circleRepository;
+    private final CircleRepository circleRepository;
+    private final CircleMembershipRepository membershipRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private CircleMemberRepository circleMemberRepository;
-
-    public List<Circle> getAllCircles() {
-        return circleRepository.findAll();
+    public List<Circle> getAll() {
+        return circleRepository.findAllByOrderByMemberCountDesc();
     }
 
-    public Circle getCircleById(Long id) {
-        return circleRepository.findById(id).orElse(null);
-    }
-
-    public Set<Long> getJoinedCircleIds(User user) {
-        if (user == null) return Set.of();
-        return circleMemberRepository.findByUser(user).stream()
-                .map(cm -> cm.getCircle().getId())
-                .collect(Collectors.toSet());
+    public Circle getById(Long id) {
+        return circleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Circle not found: " + id));
     }
 
     @Transactional
-    public void joinCircle(Long circleId, User user) {
-        Circle circle = circleRepository.findById(circleId).orElse(null);
-        if (circle != null && !circleMemberRepository.existsByCircleAndUser(circle, user)) {
-            CircleMember cm = new CircleMember(circle, user);
-            circleMemberRepository.save(cm);
-            circle.setMemberCount(circle.getMemberCount() + 1);
-            circleRepository.save(circle);
+    public Circle create(Map<String, Object> body) {
+        Circle circle = Circle.builder()
+                .name((String) body.get("name"))
+                .description((String) body.get("description"))
+                .category((String) body.get("category"))
+                .iconEmoji((String) body.getOrDefault("iconEmoji", "🔵"))
+                .build();
+        return circleRepository.save(circle);
+    }
+
+    @Transactional
+    public Map<String, String> join(Long circleId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (membershipRepository.existsByCircleIdAndUserId(circleId, user.getId())) {
+            return Map.of("message", "Already a member");
         }
+        Circle circle = getById(circleId);
+        CircleMembership membership = CircleMembership.builder()
+                .circle(circle)
+                .user(user)
+                .build();
+        membershipRepository.save(membership);
+        circle.setMemberCount(circle.getMemberCount() + 1);
+        circleRepository.save(circle);
+        return Map.of("message", "Joined circle successfully");
     }
 
     @Transactional
-    public void leaveCircle(Long circleId, User user) {
-        Circle circle = circleRepository.findById(circleId).orElse(null);
-        if (circle != null && circleMemberRepository.existsByCircleAndUser(circle, user)) {
-            circleMemberRepository.deleteByCircleAndUser(circle, user);
-            circle.setMemberCount(Math.max(0, circle.getMemberCount() - 1));
-            circleRepository.save(circle);
-        }
-    }
-
-    @Transactional
-    public Circle createCircle(String name, String category, String description, String icon) {
-        Circle c = new Circle(name, category, description, icon != null ? icon : "🌐");
-        return circleRepository.save(c);
+    public Map<String, String> leave(Long circleId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        CircleMembership membership = membershipRepository.findByCircleIdAndUserId(circleId, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Not a member"));
+        membershipRepository.delete(membership);
+        Circle circle = getById(circleId);
+        circle.setMemberCount(Math.max(0, circle.getMemberCount() - 1));
+        circleRepository.save(circle);
+        return Map.of("message", "Left circle");
     }
 }
