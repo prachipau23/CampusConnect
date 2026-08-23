@@ -1,63 +1,52 @@
 package com.campusconnect.service;
 
 import com.campusconnect.entity.Hackathon;
-import com.campusconnect.entity.HackathonInterest;
-import com.campusconnect.entity.User;
-import com.campusconnect.repository.HackathonInterestRepository;
 import com.campusconnect.repository.HackathonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class HackathonService {
 
-    @Autowired
-    private HackathonRepository hackathonRepository;
+    private final HackathonRepository hackathonRepository;
 
-    @Autowired
-    private HackathonInterestRepository interestRepository;
-
-    public List<Hackathon> searchHackathons(String query, String status) {
-        return hackathonRepository.searchHackathons(query, status);
+    public List<Hackathon> getAll() {
+        return hackathonRepository.findAllByOrderByStartDateAsc();
     }
 
-    public Hackathon getHackathonById(Long id) {
-        return hackathonRepository.findById(id).orElse(null);
-    }
-
-    public Set<Long> getInterestedHackathonIds(User user) {
-        if (user == null) return Set.of();
-        return interestRepository.findByUser(user).stream()
-                .map(hi -> hi.getHackathon().getId())
-                .collect(Collectors.toSet());
+    public Hackathon getById(Long id) {
+        return hackathonRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Hackathon not found: " + id));
     }
 
     @Transactional
-    public boolean registerInterest(Long hackathonId, User user, String track) {
-        Hackathon h = hackathonRepository.findById(hackathonId).orElse(null);
-        if (h == null) return false;
-
-        if (!interestRepository.existsByHackathonAndUser(h, user)) {
-            interestRepository.save(new HackathonInterest(h, user, track));
-            h.setRegisteredCount(h.getRegisteredCount() + 1);
-            hackathonRepository.save(h);
-            return true;
-        }
-        return false;
-    }
-
-    @Transactional
-    public Hackathon saveHackathon(Hackathon h) {
+    public Hackathon create(Map<String, Object> body) {
+        Hackathon h = Hackathon.builder()
+                .name((String) body.get("name"))
+                .description((String) body.get("description"))
+                .organizer((String) body.get("organizer"))
+                .location((String) body.get("location"))
+                .mode((String) body.getOrDefault("mode", "Online"))
+                .registrationUrl((String) body.get("registrationUrl"))
+                .prizeAmount(body.containsKey("prizeAmount")
+                        ? new BigDecimal(body.get("prizeAmount").toString()) : BigDecimal.ZERO)
+                .startDate(body.containsKey("startDate")
+                        ? LocalDate.parse((String) body.get("startDate")) : null)
+                .endDate(body.containsKey("endDate")
+                        ? LocalDate.parse((String) body.get("endDate")) : null)
+                .build();
         return hackathonRepository.save(h);
     }
 
     @Transactional
-    public void deleteHackathon(Long id) {
+    public void delete(Long id) {
         hackathonRepository.deleteById(id);
     }
 }
