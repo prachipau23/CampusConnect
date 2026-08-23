@@ -52,6 +52,7 @@ public class NotificationService {
             case RESOURCE -> base + "/resources.html#resource-" + entityId;
             case WORKSPACE -> base + "/team-workspace.html?teamId=" + entityId;
             case PROFILE -> base + "/profile.html?userId=" + entityId;
+            case SYSTEM -> base + "/notifications.html";
         };
     }
 
