@@ -40,6 +40,6 @@ public class Notification {
     private LocalDateTime createdAt;
 
     public enum EntityType {
-        PROJECT, TEAM, CIRCLE, HACKATHON, INTERNSHIP, SYSTEM
+        PROJECT, TEAM, CIRCLE, HACKATHON, INTERNSHIP, RESOURCE, WORKSPACE, PROFILE, SYSTEM
     }
 }
