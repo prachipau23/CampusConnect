@@ -1,19 +1,14 @@
 package com.campusconnect.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "teams")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Team {
 
     @Id
@@ -37,22 +32,11 @@ public class Team {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id")
-    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
     private Project linkedProject;
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<TeamMember> members = new ArrayList<>();
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<WorkspacePost> workspacePosts = new ArrayList<>();
 
     public enum TeamStatus {
         OPEN, CLOSED
