@@ -52,8 +52,8 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public REST endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/", "/api/health", "/api/auth/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 // JSP views — allow all (role check done in controllers/method security)
                 .requestMatchers("/views/**").permitAll()
                 // Static resources
