@@ -3,113 +3,71 @@ package com.campusconnect.service;
 import com.campusconnect.entity.Project;
 import com.campusconnect.entity.User;
 import com.campusconnect.repository.ProjectRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.campusconnect.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
-    @Value("${file.upload-dir:./uploads}")
-    private String uploadDir;
-
-    public List<Project> getAllProjects(String query, String status) {
-        return projectRepository.searchProjects(query, status);
+    public List<Project> getAll() {
+        return projectRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    public List<Project> getProjectsByOwner(User user) {
-        return projectRepository.findByOwner(user);
+    public List<Project> search(String q) {
+        if (q == null || q.isBlank()) return getAll();
+        return projectRepository.search(q);
     }
 
-    public Project getProjectById(Long id) {
-        return projectRepository.findById(id).orElse(null);
+    public Project getById(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
     }
 
     @Transactional
-    public Project createProject(User owner, String title, String description, String techUsed,
-                                  String githubRepo, String demoUrl, String status,
-                                  MultipartFile screenshot) throws IOException {
-
-        Project project = new Project();
-        project.setOwner(owner);
-        project.setTitle(title);
-        project.setDescription(description);
-        project.setTechUsed(techUsed);
-        project.setGithubRepo(githubRepo);
-        project.setDemoUrl(demoUrl);
-        project.setStatus(status != null ? status : "In Development");
-
-        if (screenshot != null && !screenshot.isEmpty()) {
-            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-
-            String filename = "project_" + UUID.randomUUID().toString().substring(0, 8) + "_" + screenshot.getOriginalFilename();
-            Path targetPath = uploadPath.resolve(filename);
-            Files.copy(screenshot.getInputStream(), targetPath);
-            project.setScreenshotPath("/uploads/" + filename);
-        }
-
+    public Project create(Map<String, Object> body, String ownerEmail) {
+        User owner = userRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Project project = Project.builder()
+                .title((String) body.get("title"))
+                .description((String) body.get("description"))
+                .techStack((String) body.get("techStack"))
+                .githubUrl((String) body.get("githubUrl"))
+                .liveUrl((String) body.get("liveUrl"))
+                .status(Project.ProjectStatus.ACTIVE)
+                .owner(owner)
+                .build();
         return projectRepository.save(project);
     }
 
     @Transactional
-    public Project updateProject(Long projectId, User user, String title, String description,
-                                  String techUsed, String githubRepo, String demoUrl, String status,
-                                  MultipartFile screenshot) throws IOException {
-
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
-
-        if (!project.getOwner().getId().equals(user.getId()) && !"ROLE_ADMIN".equals(user.getRole())) {
-            throw new SecurityException("Not authorized to modify this project");
+    public Project update(Long id, Map<String, Object> body, String ownerEmail) {
+        Project project = getById(id);
+        if (!project.getOwner().getEmail().equals(ownerEmail)) {
+            throw new SecurityException("Not authorized");
         }
-
-        project.setTitle(title);
-        project.setDescription(description);
-        project.setTechUsed(techUsed);
-        project.setGithubRepo(githubRepo);
-        project.setDemoUrl(demoUrl);
-        project.setStatus(status);
-
-        if (screenshot != null && !screenshot.isEmpty()) {
-            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-
-            String filename = "project_" + UUID.randomUUID().toString().substring(0, 8) + "_" + screenshot.getOriginalFilename();
-            Path targetPath = uploadPath.resolve(filename);
-            Files.copy(screenshot.getInputStream(), targetPath);
-            project.setScreenshotPath("/uploads/" + filename);
-        }
-
+        if (body.containsKey("title")) project.setTitle((String) body.get("title"));
+        if (body.containsKey("description")) project.setDescription((String) body.get("description"));
+        if (body.containsKey("techStack")) project.setTechStack((String) body.get("techStack"));
+        if (body.containsKey("githubUrl")) project.setGithubUrl((String) body.get("githubUrl"));
+        if (body.containsKey("liveUrl")) project.setLiveUrl((String) body.get("liveUrl"));
         return projectRepository.save(project);
     }
 
     @Transactional
-    public void deleteProject(Long id, User user) {
-        Project project = projectRepository.findById(id).orElse(null);
-        if (project != null && (project.getOwner().getId().equals(user.getId()) || "ROLE_ADMIN".equals(user.getRole()))) {
-            projectRepository.delete(project);
+    public void delete(Long id, String ownerEmail) {
+        Project project = getById(id);
+        if (!project.getOwner().getEmail().equals(ownerEmail)) {
+            throw new SecurityException("Not authorized");
         }
-    }
-
-    @Transactional
-    public void toggleVerification(Long id) {
-        Project project = projectRepository.findById(id).orElse(null);
-        if (project != null) {
-            project.setVerified(!project.isVerified());
-            projectRepository.save(project);
-        }
+        projectRepository.delete(project);
     }
 }
