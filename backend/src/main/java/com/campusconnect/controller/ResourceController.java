@@ -1,73 +1,68 @@
 package com.campusconnect.controller;
 
 import com.campusconnect.entity.Resource;
-import com.campusconnect.entity.User;
 import com.campusconnect.service.ResourceService;
-import com.campusconnect.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/resources")
+@RestController
+@RequestMapping("/api/resources")
+@RequiredArgsConstructor
 public class ResourceController {
 
-    @Autowired
-    private ResourceService resourceService;
-
-    @Autowired
-    private UserService userService;
+    private final ResourceService resourceService;
 
     @GetMapping
-    public String listResources(@RequestParam(value = "query", required = false) String query,
-                                @RequestParam(value = "category", required = false) String category,
-                                @AuthenticationPrincipal UserDetails userDetails,
-                                Model model) {
-
-        User currentUser = userDetails != null ? userService.findByEmail(userDetails.getUsername()).orElse(null) : null;
-        List<Resource> resources = resourceService.searchResources(query, category);
-
-        model.addAttribute("resources", resources);
-        model.addAttribute("query", query);
-        model.addAttribute("category", category);
-        model.addAttribute("currentUser", currentUser);
-        return "resources/list";
+    public ResponseEntity<List<Resource>> list() {
+        // Return metadata only — fileData excluded in JSON serialization via @JsonIgnore
+        return ResponseEntity.ok(resourceService.getAll());
     }
 
-    @PostMapping("/upload")
-    public String handleUpload(@AuthenticationPrincipal UserDetails userDetails,
-                               @RequestParam("title") String title,
-                               @RequestParam("category") String category,
-                               @RequestParam("file") MultipartFile file,
-                               RedirectAttributes redirectAttributes) {
-
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        try {
-            resourceService.uploadResource(currentUser, title, category, file);
-            redirectAttributes.addFlashAttribute("successMessage", "Shared resource uploaded successfully to Campus Library!");
-        } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error uploading file: " + e.getMessage());
-        }
-
-        return "redirect:/resources";
+    @GetMapping("/{id}")
+    public ResponseEntity<Resource> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(resourceService.getById(id));
     }
 
-    @PostMapping("/{id}/download")
-    public String handleDownload(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
-        Resource res = resourceService.incrementDownload(id);
-        if (res != null) {
-            return "redirect:" + (res.getFilePath() != null ? res.getFilePath() : "/resources");
-        }
-        return "redirect:/resources";
+    /**
+     * Returns actual file bytes with proper Content-Disposition header.
+     * This is a REAL download, not a placeholder.
+     */
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> download(@PathVariable Long id) {
+        Resource resource = resourceService.getById(id);
+        String contentType = resource.getFileType() != null
+                ? resource.getFileType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + resource.getOriginalFileName() + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(resource.getFileSizeBytes())
+                .body(resource.getFileData());
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Resource> upload(@RequestParam String title,
+                                           @RequestParam(required = false) String description,
+                                           @RequestParam(required = false) String category,
+                                           @RequestParam("file") MultipartFile file,
+                                           Authentication auth) throws IOException {
+        return ResponseEntity.ok(
+                resourceService.upload(title, description, category, file, auth.getName()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
+        resourceService.delete(id);
+        return ResponseEntity.ok(Map.of("message", "Resource deleted"));
     }
 }
