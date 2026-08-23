@@ -39,32 +39,35 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (!seedEnabled) {
             log.info("Seed data is disabled. Set seed.enabled=true to populate.");
             return;
         }
-        if (userRepository.count() > 0) {
-            log.info("Database already has data. Skipping seed.");
-            return;
+        try {
+            if (userRepository.count() > 0) {
+                log.info("Database already has data. Skipping seed.");
+                return;
+            }
+
+            log.info("=== Seeding CampusConnect database ===");
+
+            List<User> students = seedStudents();
+            List<User> admins = seedAdmins();
+            List<Project> projects = seedProjects(students);
+            List<Circle> circles = seedCircles();
+            seedCircleMemberships(circles, students);
+            List<Team> teams = seedTeams(students, projects);
+            seedHackathons();
+            seedInternships();
+            seedResources(admins.get(0), students);
+            seedNotifications(students, projects, teams, circles);
+
+            log.info("=== Seed complete: {} students, {} projects, {} circles, {} teams ===",
+                    students.size(), projects.size(), circles.size(), teams.size());
+        } catch (Exception e) {
+            log.error("Error during database seeding: {}", e.getMessage(), e);
         }
-
-        log.info("=== Seeding CampusConnect database ===");
-
-        List<User> students = seedStudents();
-        List<User> admins = seedAdmins();
-        List<Project> projects = seedProjects(students);
-        List<Circle> circles = seedCircles();
-        seedCircleMemberships(circles, students);
-        List<Team> teams = seedTeams(students, projects);
-        seedHackathons();
-        seedInternships();
-        seedResources(admins.get(0), students);
-        seedNotifications(students, projects, teams, circles);
-
-        log.info("=== Seed complete: {} students, {} projects, {} circles, {} teams ===",
-                students.size(), projects.size(), circles.size(), teams.size());
     }
 
     private List<User> seedStudents() {
