@@ -1,10 +1,16 @@
 package com.campusconnect.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "teams")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Team {
 
     @Id
@@ -14,55 +20,35 @@ public class Team {
     @Column(nullable = false)
     private String name;
 
-    private String projectTitle;
-
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String requiredSkills;
-    private int targetMemberCount = 4;
-    private int currentMemberCount = 1;
-    private String deadline;
-    private String status = "OPEN"; // "OPEN", "CLOSED"
+    @Column(nullable = false)
+    @Builder.Default
+    private int maxSize = 5;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private TeamStatus status = TeamStatus.OPEN;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @JoinColumn(name = "project_id")
+    private Project linkedProject;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    public Team() {}
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TeamMember> members = new ArrayList<>();
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<WorkspacePost> workspacePosts = new ArrayList<>();
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getProjectTitle() { return projectTitle; }
-    public void setProjectTitle(String projectTitle) { this.projectTitle = projectTitle; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public String getRequiredSkills() { return requiredSkills; }
-    public void setRequiredSkills(String requiredSkills) { this.requiredSkills = requiredSkills; }
-
-    public int getTargetMemberCount() { return targetMemberCount; }
-    public void setTargetMemberCount(int targetMemberCount) { this.targetMemberCount = targetMemberCount; }
-
-    public int getCurrentMemberCount() { return currentMemberCount; }
-    public void setCurrentMemberCount(int currentMemberCount) { this.currentMemberCount = currentMemberCount; }
-
-    public String getDeadline() { return deadline; }
-    public void setDeadline(String deadline) { this.deadline = deadline; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public User getCreatedBy() { return createdBy; }
-    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public enum TeamStatus {
+        OPEN, CLOSED
+    }
 }
