@@ -441,8 +441,8 @@ public class DataSeeder implements CommandLineRunner {
                     .targetUser(students.get(studentIdx))
                     .title((String) nd[1])
                     .message((String) nd[2])
-                    .entityType((EntityType) nd[3])
-                    .entityId((Long) nd[4])
+                    .targetEntityType((EntityType) nd[3])
+                    .targetEntityId((Long) nd[4])
                     .read(studentIdx % 3 == 0)
                     .build();
             notificationRepository.save(n);
