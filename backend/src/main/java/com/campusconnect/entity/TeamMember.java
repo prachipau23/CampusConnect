@@ -1,10 +1,15 @@
 package com.campusconnect.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "team_members")
+@Table(name = "team_members",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"team_id", "user_id"}))
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TeamMember {
 
     @Id
@@ -19,29 +24,16 @@ public class TeamMember {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String role = "Member"; // "Leader", "Member"
-    private LocalDateTime joinedAt = LocalDateTime.now();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private MemberRole role = MemberRole.MEMBER;
 
-    public TeamMember() {}
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime joinedAt;
 
-    public TeamMember(Team team, User user, String role) {
-        this.team = team;
-        this.user = user;
-        this.role = role;
+    public enum MemberRole {
+        LEAD, MEMBER
     }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Team getTeam() { return team; }
-    public void setTeam(Team team) { this.team = team; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
-
-    public LocalDateTime getJoinedAt() { return joinedAt; }
-    public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
 }
