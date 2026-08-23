@@ -56,8 +56,16 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 // JSP views — allow all (role check done in controllers/method security)
                 .requestMatchers("/views/**").permitAll()
-                // Static resources
-                .requestMatchers("/WEB-INF/**", "/css/**", "/js/**", "/images/**").permitAll()
+                // Public read-only REST endpoints (for frontend views and browsing)
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                        "/api/hackathons/**",
+                        "/api/internships/**",
+                        "/api/projects/**",
+                        "/api/circles/**",
+                        "/api/teams/**",
+                        "/api/resources/**",
+                        "/api/directory/**"
+                ).permitAll()
                 // Admin/Teacher REST — role gated
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "TEACHER")
                 // All other API calls need auth
