@@ -1,59 +1,51 @@
 package com.campusconnect.service;
 
 import com.campusconnect.entity.Internship;
-import com.campusconnect.entity.InternshipBookmark;
-import com.campusconnect.entity.User;
-import com.campusconnect.repository.InternshipBookmarkRepository;
 import com.campusconnect.repository.InternshipRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class InternshipService {
 
-    @Autowired
-    private InternshipRepository internshipRepository;
+    private final InternshipRepository internshipRepository;
 
-    @Autowired
-    private InternshipBookmarkRepository bookmarkRepository;
-
-    public List<Internship> searchInternships(String query, String type) {
-        return internshipRepository.searchInternships(query, type);
+    public List<Internship> getAll() {
+        return internshipRepository.findAllByOrderByDeadlineAsc();
     }
 
-    public Set<Long> getBookmarkedInternshipIds(User user) {
-        if (user == null) return Set.of();
-        return bookmarkRepository.findByUser(user).stream()
-                .map(ib -> ib.getInternship().getId())
-                .collect(Collectors.toSet());
+    public Internship getById(Long id) {
+        return internshipRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Internship not found: " + id));
     }
 
     @Transactional
-    public boolean toggleBookmark(Long internshipId, User user) {
-        Internship internship = internshipRepository.findById(internshipId).orElse(null);
-        if (internship == null) return false;
-
-        if (bookmarkRepository.existsByInternshipAndUser(internship, user)) {
-            bookmarkRepository.deleteByInternshipAndUser(internship, user);
-            return false;
-        } else {
-            bookmarkRepository.save(new InternshipBookmark(internship, user));
-            return true;
-        }
-    }
-
-    @Transactional
-    public Internship saveInternship(Internship i) {
+    public Internship create(Map<String, Object> body) {
+        Internship i = Internship.builder()
+                .title((String) body.get("title"))
+                .company((String) body.get("company"))
+                .description((String) body.get("description"))
+                .location((String) body.get("location"))
+                .mode((String) body.getOrDefault("mode", "Remote"))
+                .duration((String) body.get("duration"))
+                .applyUrl((String) body.get("applyUrl"))
+                .stipend(body.containsKey("stipend")
+                        ? new BigDecimal(body.get("stipend").toString()) : BigDecimal.ZERO)
+                .deadline(body.containsKey("deadline")
+                        ? LocalDate.parse((String) body.get("deadline")) : null)
+                .build();
         return internshipRepository.save(i);
     }
 
     @Transactional
-    public void deleteInternship(Long id) {
+    public void delete(Long id) {
         internshipRepository.deleteById(id);
     }
 }
