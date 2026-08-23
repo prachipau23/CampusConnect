@@ -10,9 +10,6 @@ RUN mvn clean package -DskipTests --no-transfer-progress
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
-RUN addgroup -S campusconnect && adduser -S campusconnect -G campusconnect
-USER campusconnect
-
 COPY --from=builder /app/target/app.jar app.jar
 
 EXPOSE 8080
