@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Sign In – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth-wrapper {
+      max-width: 440px;
+      margin: 3rem auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+    <div class="auth-wrapper">
+      <div class="card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h1 style="font-size: 1.8rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">Welcome Back</h1>
+          <p style="color: var(--stone-brown); font-size: 0.95rem;">Sign in to access your project teams & circles.</p>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <!-- Account Type Selector -->
+          <div class="form-group">
+            <label class="form-label">Role Category</label>
+            <div style="display: flex; gap: 0.5rem; background-color: var(--white-smoke); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <button type="button" class="btn btn-sm btn-primary" style="flex: 1;" onclick="setRole(this, 'Student')">Student</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'Faculty')">Faculty</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'Mentor')">Mentor</button>
+            </div>
+          </div>
+
+          <!-- University Email -->
+          <div class="form-group">
+            <label class="form-label" for="login-email">University Email</label>
+            <input type="email" id="login-email" class="form-control" value="aarav.sharma@campus.edu" required>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <label class="form-label" for="login-password" style="margin-bottom: 0;">Password</label>
+              <a href="forgot-password.html" style="font-size: 0.8rem; font-weight: 600;">Forgot Password?</a>
+            </div>
+            <input type="password" id="login-password" class="form-control" value="••••••••" required>
+          </div>
+
+          <!-- Remember me -->
+          <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="checkbox" id="login-remember" checked>
+            <label for="login-remember" style="font-size: 0.875rem; color: var(--stone-brown);">Remember this device for 30 days</label>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--stone-brown);">
+          Don't have an account? <a href="register.html" style="font-weight: 600;">Register as Student</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function setRole(btn, role) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('button').forEach(b => {
+        b.className = 'btn btn-sm btn-ghost';
+      });
+      btn.className = 'btn btn-sm btn-primary';
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      showToast("Sign in successful! Loading your student workspace...", "success");
+      setTimeout(() => {
+        window.location.href = "projects.html";
+      }, 1200);
+    }
+  </script>
+</body>
+</html>

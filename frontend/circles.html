@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaboration Circles – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .circle-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .circle-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background-color: var(--night-bordeaux-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Collaboration Circles</h1>
+        <p class="page-subtitle">Join interest-based student guilds to participate in peer discussions, paper readings, and workshops.</p>
+      </div>
+      <button class="btn btn-outline" onclick="showToast('Guild creation proposals are submitted to Faculty Mentors.', 'info')">
+        💡 Propose New Circle
+      </button>
+    </div>
+
+    <!-- Circles Grid -->
+    <div class="grid grid-cols-2" id="circles-grid">
+      <!-- Populated via JS -->
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let circlesList = getStoredData("circles", MOCK_DATA.circles);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCircles();
+    });
+
+    function renderCircles() {
+      const grid = document.getElementById("circles-grid");
+      if (!grid) return;
+
+      grid.innerHTML = circlesList.map(c => `
+        <div class="card card-interactive" data-circle-id="${c.id}">
+          <div class="circle-card-header">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div class="circle-icon-box">${c.icon}</div>
+              <div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem;">${c.name}</h3>
+                <span class="badge badge-bordeaux">${c.category}</span>
+              </div>
+            </div>
+            <button class="btn btn-sm ${c.joined ? 'btn-outline' : 'btn-primary'}" onclick="toggleCircleJoin('${c.id}')">
+              ${c.joined ? '✓ Joined' : '+ Join Circle'}
+            </button>
+          </div>
+
+          <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+            ${c.description}
+          </p>
+
+          <div style="background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.825rem;">
+            <strong style="color: var(--night-bordeaux);">🔥 Active Topic:</strong> ${c.activeDiscussions}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; font-size: 0.825rem; color: var(--stone-brown);">
+            <span>👥 <strong>${c.membersCount}</strong> Peer Members</span>
+            <span>Lead: <strong>${c.leadName}</strong></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleCircleJoin(circleId) {
+      const target = circlesList.find(c => c.id === circleId);
+      if (target) {
+        target.joined = !target.joined;
+        if (target.joined) {
+          target.membersCount += 1;
+          showToast(`Joined ${target.name}!`, "success");
+        } else {
+          target.membersCount -= 1;
+          showToast(`Left ${target.name}.`, "info");
+        }
+        setStoredData("circles", circlesList);
+        renderCircles();
+      }
+    }
+  </script>
+</body>
+</html>

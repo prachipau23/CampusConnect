@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Workspace – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 900px) {
+      .kanban-board { grid-template-columns: 1fr; }
+    }
+    .kanban-col {
+      background-color: var(--white-smoke);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+    }
+    .kanban-col-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--dusty-taupe-light);
+    }
+    .task-card {
+      background-color: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <div style="margin-bottom: 1rem;">
+      <a href="teams.html" class="btn btn-sm btn-ghost" style="padding-left: 0;">&larr; Back to Teams Directory</a>
+    </div>
+
+    <!-- Workspace Header Card -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem;">
+            <span class="badge badge-bordeaux">Team Workspace</span>
+            <span class="badge badge-taupe">Project: CampusConnect</span>
+          </div>
+          <h1 class="page-title" id="ws-team-name">Team CampusConnect Core</h1>
+          <p style="color: var(--stone-brown); font-size: 0.9rem;" id="ws-project-name">
+            Building the main portal for student collaboration across university departments.
+          </p>
+        </div>
+
+        <button class="btn btn-primary" onclick="showToast('Invitation link copied to clipboard!', 'success')">
+          🔗 Invite Teammate
+        </button>
+      </div>
+    </div>
+
+    <!-- Workspace Tab Navigation -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('members')">👥 Members</button>
+      <button class="tab-btn" onclick="switchTab('discussion')">💬 Discussion</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">📋 Tasks (Kanban)</button>
+      <button class="tab-btn" onclick="switchTab('announcements')">📢 Announcements</button>
+    </div>
+
+    <!-- TAB 1: MEMBERS -->
+    <div class="tab-content active" id="tab-members">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.2rem; color: var(--night-bordeaux);">Team Roster</h2>
+          <button class="btn btn-sm btn-outline" onclick="showToast('Navigating to student directory to recruit...', 'info')">Search Student Directory</button>
+        </div>
+
+        <div id="members-list" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DISCUSSION -->
+    <div class="tab-content" id="tab-discussion">
+      <div class="card">
+        <h2 style="font-size: 1.2rem; color: var(--night-bordeaux); margin-bottom: 1.25rem;">Team Discussion Feed</h2>
+
+        <!-- Post Message Box -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <textarea id="discussion-input" class="form-control" rows="3" placeholder="Share an update or question with the team..."></textarea>
+          <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+            <button class="btn btn-primary" onclick="postDiscussion()">Post Update</button>
+          </div>
+        </div>
+
+        <!-- Discussion Stream -->
+        <div id="discussion-stream" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TASKS (KANBAN) -->
+    <div class="tab-content" id="tab-tasks">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.2rem; color: var(--black);">Project Task Board</h2>
+        <button class="btn btn-sm btn-primary" data-modal-target="add-task-modal">➕ Add New Task</button>
+      </div>
+
+      <div class="kanban-board">
+        <!-- Col 1: To Do -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <h3 style="font-size: 1rem; color: var(--night-bordeaux);">To Do</h3>
+            <span class="badge badge-taupe" id="cnt-todo">1</span>
+          </div>
+          <div id="col-todo"></div>
+        </div>
+
+        <!-- Col 2: In Progress -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <h3 style="font-size: 1rem; color: var(--stone-brown);">In Progress</h3>
+            <span class="badge badge-taupe" id="cnt-in-progress">1</span>
+          </div>
+          <div id="col-in-progress"></div>
+        </div>
+
+        <!-- Col 3: Done -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <h3 style="font-size: 1rem; color: var(--black);">Done</h3>
+            <span class="badge badge-taupe" id="cnt-done">2</span>
+          </div>
+          <div id="col-done"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: ANNOUNCEMENTS -->
+    <div class="tab-content" id="tab-announcements">
+      <div class="card">
+        <h2 style="font-size: 1.2rem; color: var(--night-bordeaux); margin-bottom: 1.25rem;">Important Team Notices</h2>
+        <div id="announcements-list" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Add Task Modal -->
+  <div class="modal-backdrop" id="add-task-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Kanban Task</h3>
+        <button class="modal-close" data-modal-close>&times;</button>
+      </div>
+      <form onsubmit="handleAddTask(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Task Title *</label>
+            <input type="text" id="task-title-input" class="form-control" placeholder="e.g. Write REST API documentation" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assignee *</label>
+            <select id="task-assignee-select" class="form-select">
+              <option value="Aarav Sharma">Aarav Sharma</option>
+              <option value="Priya Patel">Priya Patel</option>
+              <option value="Rohan Verma">Rohan Verma</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status Column</label>
+            <select id="task-status-select" class="form-select">
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    const workspaceData = getStoredData("teamWorkspace", MOCK_DATA.teamWorkspace);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderMembers();
+      renderDiscussions();
+      renderTasks();
+      renderAnnouncements();
+    });
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+      const targetBtn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.innerText.toLowerCase().includes(tabName));
+      if (targetBtn) targetBtn.classList.add("active");
+
+      const targetContent = document.getElementById(`tab-${tabName}`);
+      if (targetContent) targetContent.classList.add("active");
+    }
+
+    function renderMembers() {
+      const container = document.getElementById("members-list");
+      container.innerHTML = workspaceData.members.map(m => `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background-color: var(--white-smoke); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <div class="user-avatar" style="width: 42px; height: 42px; font-size: 1rem;">${m.avatar}</div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem;">${m.name}</div>
+              <div style="font-size: 0.8rem; color: var(--stone-brown);">${m.role} • ${m.dept}</div>
+            </div>
+          </div>
+          <span class="badge badge-bordeaux">${m.status}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderDiscussions() {
+      const container = document.getElementById("discussion-stream");
+      container.innerHTML = workspaceData.discussions.map(d => `
+        <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--white);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="user-avatar" style="width: 28px; height: 28px; font-size: 0.75rem;">${d.avatar}</div>
+              <strong style="font-size: 0.9rem;">${d.author}</strong>
+            </div>
+            <span style="font-size: 0.775rem; color: var(--stone-brown);">${d.time}</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--black); line-height: 1.5;">${d.content}</p>
+        </div>
+      `).join('');
+    }
+
+    function postDiscussion() {
+      const text = document.getElementById("discussion-input").value.trim();
+      if (!text) return;
+
+      workspaceData.discussions.unshift({
+        id: "dsc-" + Date.now(),
+        author: MOCK_DATA.currentUser.name,
+        avatar: MOCK_DATA.currentUser.avatar,
+        time: "Just now",
+        content: text
+      });
+
+      setStoredData("teamWorkspace", workspaceData);
+      renderDiscussions();
+      document.getElementById("discussion-input").value = "";
+      showToast("Discussion post added!", "success");
+    }
+
+    function renderTasks() {
+      const colTodo = document.getElementById("col-todo");
+      const colInProg = document.getElementById("col-in-progress");
+      const colDone = document.getElementById("col-done");
+
+      const todoTasks = workspaceData.tasks.filter(t => t.status === "To Do");
+      const inProgTasks = workspaceData.tasks.filter(t => t.status === "In Progress");
+      const doneTasks = workspaceData.tasks.filter(t => t.status === "Done");
+
+      document.getElementById("cnt-todo").innerText = todoTasks.length;
+      document.getElementById("cnt-in-progress").innerText = inProgTasks.length;
+      document.getElementById("cnt-done").innerText = doneTasks.length;
+
+      const makeTaskHTML = (t) => `
+        <div class="task-card">
+          <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">${t.title}</div>
+          <div style="font-size: 0.75rem; color: var(--stone-brown); display: flex; justify-content: space-between;">
+            <span>👤 ${t.assignee}</span>
+          </div>
+        </div>
+      `;
+
+      colTodo.innerHTML = todoTasks.map(makeTaskHTML).join('');
+      colInProg.innerHTML = inProgTasks.map(makeTaskHTML).join('');
+      colDone.innerHTML = doneTasks.map(makeTaskHTML).join('');
+    }
+
+    function handleAddTask(e) {
+      e.preventDefault();
+      const title = document.getElementById("task-title-input").value;
+      const assignee = document.getElementById("task-assignee-select").value;
+      const status = document.getElementById("task-status-select").value;
+
+      workspaceData.tasks.push({
+        id: "tsk-" + Date.now(),
+        title: title,
+        assignee: assignee,
+        status: status
+      });
+
+      setStoredData("teamWorkspace", workspaceData);
+      renderTasks();
+      document.getElementById("add-task-modal").classList.remove("show");
+      showToast("Task created on Kanban board!", "success");
+    }
+
+    function renderAnnouncements() {
+      const container = document.getElementById("announcements-list");
+      container.innerHTML = workspaceData.announcements.map(a => `
+        <div style="padding: 1.25rem; background-color: var(--night-bordeaux-light); border: 1px solid var(--dusty-taupe); border-radius: var(--radius-md);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h3 style="font-size: 1.05rem; color: var(--night-bordeaux);">${a.title}</h3>
+            <span style="font-size: 0.775rem; font-weight: 700; color: var(--stone-brown);">${a.date}</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--black); line-height: 1.5;">${a.content}</p>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

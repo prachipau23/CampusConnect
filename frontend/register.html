@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth-wrapper {
+      max-width: 520px;
+      margin: 2rem auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+    <div class="auth-wrapper">
+      <div class="card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h1 style="font-size: 1.8rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">Join CampusConnect</h1>
+          <p style="color: var(--stone-brown); font-size: 0.95rem;">Create your student account to start collaborating with peers.</p>
+        </div>
+
+        <form id="register-form" onsubmit="handleRegister(event)">
+          <!-- Full Name -->
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Name *</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Aarav Sharma" required>
+          </div>
+
+          <!-- University Email -->
+          <div class="form-group">
+            <label class="form-label" for="reg-email">University Email *</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="student.name@campus.edu" required>
+            <span style="font-size: 0.775rem; color: var(--stone-brown);">Must be a valid .edu or university domain address</span>
+          </div>
+
+          <!-- Department & Year Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="reg-dept">Department *</label>
+              <select id="reg-dept" class="form-select" required>
+                <option value="">Select Dept</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="AI & Data Science">AI & Data Science</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Design & Architecture">Design & Architecture</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-year">Graduation Year *</label>
+              <select id="reg-year" class="form-select" required>
+                <option value="">Select Year</option>
+                <option value="1st Year">1st Year (2029)</option>
+                <option value="2nd Year">2nd Year (2028)</option>
+                <option value="3rd Year">3rd Year (2027)</option>
+                <option value="4th Year">4th Year (2026)</option>
+                <option value="Graduate">Postgraduate</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Primary Technical Skills -->
+          <div class="form-group">
+            <label class="form-label" for="reg-skills">Primary Skills (comma separated)</label>
+            <input type="text" id="reg-skills" class="form-control" placeholder="e.g. React, Java Spring Boot, Figma, Python">
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Password *</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="At least 8 characters" required minlength="8">
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group">
+            <label class="form-label" for="reg-confirm-password">Confirm Password *</label>
+            <input type="password" id="reg-confirm-password" class="form-control" placeholder="Re-enter password" required>
+          </div>
+
+          <!-- Terms Checkbox -->
+          <div class="form-group" style="display: flex; gap: 0.5rem; align-items: flex-start; margin-top: 1rem;">
+            <input type="checkbox" id="reg-terms" required style="margin-top: 0.25rem;">
+            <label for="reg-terms" style="font-size: 0.85rem; color: var(--stone-brown);">
+              I agree to the <a href="#">Community Guidelines</a> and <a href="#">Terms of Service</a> for student collaboration on CampusConnect.
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Complete Registration</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--stone-brown);">
+          Already have an account? <a href="login.html" style="font-weight: 600;">Sign In here</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    function handleRegister(e) {
+      e.preventDefault();
+      const pwd = document.getElementById("reg-password").value;
+      const confirmPwd = document.getElementById("reg-confirm-password").value;
+
+      if (pwd !== confirmPwd) {
+        alert("Passwords do not match. Please verify and re-enter.");
+        return;
+      }
+
+      showToast("Account created successfully! Redirecting to profile...", "success");
+      setTimeout(() => {
+        window.location.href = "profile.html";
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

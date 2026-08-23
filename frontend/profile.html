@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .progress-bar-bg {
+      background-color: var(--dusty-taupe-light);
+      height: 10px;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background-color: var(--night-bordeaux);
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width 0.3s ease;
+    }
+    .profile-avatar-xl {
+      width: 90px;
+      height: 90px;
+      border-radius: var(--radius-full);
+      background-color: var(--night-bordeaux);
+      color: var(--white);
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: var(--font-heading);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--card-shadow);
+      border: 3px solid var(--white);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Student Profile</h1>
+        <p class="page-subtitle">Manage your academic credentials, skills, external links, and resume.</p>
+      </div>
+      <button class="btn btn-primary" id="profile-edit-btn" onclick="toggleEditMode()">
+        ✏️ Edit Profile
+      </button>
+    </div>
+
+    <div class="grid grid-cols-3" style="align-items: start;">
+
+      <!-- Left Col: Profile Overview Card -->
+      <div class="card" style="grid-column: span 1;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <div class="profile-avatar-xl" id="view-avatar">AS</div>
+          </div>
+          <h2 id="view-name" style="font-size: 1.4rem;">Aarav Sharma</h2>
+          <p id="view-dept" style="color: var(--stone-brown); font-size: 0.9rem; font-weight: 600;">Computer Science & Engineering</p>
+          <span class="badge badge-bordeaux" id="view-year" style="margin-top: 0.5rem;">3rd Year (Class of 2027)</span>
+        </div>
+
+        <!-- Profile Completion Metric -->
+        <div style="background-color: var(--night-bordeaux-light); border: 1px solid var(--dusty-taupe-light); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 700; color: var(--night-bordeaux);">
+            <span>Profile Completion</span>
+            <span id="completion-text">85%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="completion-bar" style="width: 85%;"></div>
+          </div>
+          <p style="font-size: 0.775rem; color: var(--stone-brown); margin-top: 0.4rem;">Add portfolio link to reach 100%</p>
+        </div>
+
+        <!-- Social & Code Links -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--stone-brown); margin-bottom: 0.75rem; letter-spacing: 0.05em;">External Links</h4>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
+            <a href="https://github.com/aaravsharma" target="_blank" id="view-github" style="display: flex; align-items: center; gap: 0.5rem;">
+              🐙 GitHub Repository
+            </a>
+            <a href="https://linkedin.com/in/aaravsharma-dev" target="_blank" id="view-linkedin" style="display: flex; align-items: center; gap: 0.5rem;">
+              💼 LinkedIn Profile
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Col: Profile View / Edit Form -->
+      <div class="card" style="grid-column: span 2;">
+
+        <!-- View Mode Panel -->
+        <div id="view-mode-panel">
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">About Me</h3>
+            <p id="view-bio" style="color: var(--stone-brown); font-size: 0.95rem; line-height: 1.6;">
+              Passionate Full-Stack Developer & AI Enthusiast. Building next-gen campus innovation tools and open-source projects using Java Spring Boot, React, and TypeScript.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.75rem;">Technical Skills</h3>
+            <div id="view-skills-chips" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+              <span class="badge badge-taupe">Java</span>
+              <span class="badge badge-taupe">Spring Boot</span>
+              <span class="badge badge-taupe">React</span>
+              <span class="badge badge-taupe">TypeScript</span>
+              <span class="badge badge-taupe">PostgreSQL</span>
+              <span class="badge badge-taupe">Docker</span>
+            </div>
+          </div>
+
+          <!-- Resume Upload Section -->
+          <div style="margin-bottom: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.75rem;">Student Resume</h3>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 1rem 1.25rem; border-radius: var(--radius-md);">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <span style="font-size: 1.8rem; color: var(--night-bordeaux);">📄</span>
+                <div>
+                  <div style="font-weight: 700; font-size: 0.925rem;" id="resume-filename">Aarav_Sharma_Resume_2026.pdf</div>
+                  <div style="font-size: 0.775rem; color: var(--stone-brown);">Uploaded on July 15, 2026 • 1.4 MB</div>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="showToast('Downloading resume copy...', 'info')">Download PDF</button>
+            </div>
+          </div>
+
+          <!-- Published Projects List -->
+          <div>
+            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 1rem;">Projects Contributed To</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <div style="padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="font-size: 0.95rem;">CampusConnect Innovation Platform</strong>
+                  <div style="font-size: 0.8rem; color: var(--stone-brown);">Role: Lead Backend Architect</div>
+                </div>
+                <a href="project-detail.html?id=prj-201" class="btn btn-sm btn-ghost">View Project &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Mode Form (Hidden by default) -->
+        <form id="edit-mode-form" style="display: none;" onsubmit="saveProfileChanges(event)">
+          <h3 style="font-size: 1.2rem; color: var(--night-bordeaux); margin-bottom: 1.25rem;">Edit Student Credentials</h3>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Full Name</label>
+            <input type="text" id="edit-name" class="form-control" value="Aarav Sharma" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="edit-dept">Department</label>
+              <select id="edit-dept" class="form-select">
+                <option value="Computer Science & Engineering" selected>Computer Science & Engineering</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="AI & Data Science">AI & Data Science</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-year">Year</label>
+              <select id="edit-year" class="form-select">
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-bio">Student Bio</label>
+            <textarea id="edit-bio" class="form-control" rows="3">Passionate Full-Stack Developer & AI Enthusiast. Building next-gen campus innovation tools and open-source projects using Java Spring Boot, React, and TypeScript.</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-skills">Skills (Comma Separated)</label>
+            <input type="text" id="edit-skills" class="form-control" value="Java, Spring Boot, React, TypeScript, PostgreSQL, Docker">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="edit-github">GitHub URL</label>
+              <input type="url" id="edit-github" class="form-control" value="https://github.com/aaravsharma">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-linkedin">LinkedIn URL</label>
+              <input type="url" id="edit-linkedin" class="form-control" value="https://linkedin.com/in/aaravsharma-dev">
+            </div>
+          </div>
+
+          <!-- Drag and Drop Resume Zone -->
+          <div class="form-group">
+            <label class="form-label">Update Resume (PDF)</label>
+            <div class="dropzone" id="resume-dropzone" onclick="document.getElementById('resume-file-input').click()">
+              <div class="dropzone-icon">📤</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--black);">Click or Drag & Drop new resume file</div>
+              <div style="font-size: 0.8rem; color: var(--stone-brown);">Supported formats: PDF (Max 5MB)</div>
+              <input type="file" id="resume-file-input" accept=".pdf" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-outline" onclick="toggleEditMode()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let isEditing = false;
+
+    function toggleEditMode() {
+      isEditing = !isEditing;
+      const viewPanel = document.getElementById("view-mode-panel");
+      const editForm = document.getElementById("edit-mode-form");
+      const editBtn = document.getElementById("profile-edit-btn");
+
+      if (isEditing) {
+        viewPanel.style.display = "none";
+        editForm.style.display = "block";
+        editBtn.innerHTML = "❌ Cancel Editing";
+        editBtn.className = "btn btn-outline";
+      } else {
+        viewPanel.style.display = "block";
+        editForm.style.display = "none";
+        editBtn.innerHTML = "✏️ Edit Profile";
+        editBtn.className = "btn btn-primary";
+      }
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById("resume-filename").innerText = file.name;
+        showToast(`Selected ${file.name} for upload.`, "info");
+      }
+    }
+
+    function saveProfileChanges(e) {
+      e.preventDefault();
+      const name = document.getElementById("edit-name").value;
+      const dept = document.getElementById("edit-dept").value;
+      const year = document.getElementById("edit-year").value;
+      const bio = document.getElementById("edit-bio").value;
+      const skillsStr = document.getElementById("edit-skills").value;
+
+      document.getElementById("view-name").innerText = name;
+      document.getElementById("view-dept").innerText = dept;
+      document.getElementById("view-year").innerText = year;
+      document.getElementById("view-bio").innerText = bio;
+
+      // Update skills chips
+      const skillsArr = skillsStr.split(",").map(s => s.trim()).filter(Boolean);
+      const skillsContainer = document.getElementById("view-skills-chips");
+      skillsContainer.innerHTML = skillsArr.map(s => `<span class="badge badge-taupe">${s}</span>`).join("");
+
+      toggleEditMode();
+      showToast("Profile updated successfully!", "success");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications Center – CampusConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <div id="main-nav"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Notifications Center</h1>
+        <p class="page-subtitle">Stay updated with team requests, circle discussions, hackathon deadlines, and project messages.</p>
+      </div>
+      <button class="btn btn-outline" onclick="markAllRead()">
+        ✓ Mark All as Read
+      </button>
+    </div>
+
+    <!-- Notifications Stream Card -->
+    <div class="card">
+      <div id="notif-full-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <div id="main-footer"></div>
+
+  <!-- JavaScript dependencies -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let notifs = getStoredData("notifications", MOCK_DATA.notifications);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderFullNotifs();
+    });
+
+    function renderFullNotifs() {
+      const container = document.getElementById("notif-full-list");
+      if (!container) return;
+
+      if (notifs.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--stone-brown);">No notifications found</div>`;
+        return;
+      }
+
+      container.innerHTML = notifs.map(n => `
+        <div class="notification-item ${n.unread ? 'unread' : ''}" style="border: 1px solid var(--border-color); border-radius: var(--radius-md);" onclick="toggleRead('${n.id}')">
+          <div class="notification-icon">${n.icon}</div>
+          <div class="notification-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+              <strong style="font-size: 0.95rem; color: var(--black);">${n.title}</strong>
+              <span class="notification-time">${n.time}</span>
+            </div>
+            <div class="notification-text" style="color: var(--stone-brown);">${n.message}</div>
+          </div>
+          ${n.unread ? `<span class="badge badge-bordeaux" style="align-self: center; font-size: 0.7rem;">New</span>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function toggleRead(id) {
+      const target = notifs.find(n => n.id === id);
+      if (target) {
+        target.unread = !target.unread;
+        setStoredData("notifications", notifs);
+        renderFullNotifs();
+        renderNavbar(); // Refresh nav unread badge
+      }
+    }
+
+    function markAllRead() {
+      notifs.forEach(n => n.unread = false);
+      setStoredData("notifications", notifs);
+      renderFullNotifs();
+      renderNavbar();
+      showToast("All notifications marked as read", "info");
+    }
+  </script>
+</body>
+</html>

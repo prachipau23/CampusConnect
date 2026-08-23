@@ -1,0 +1,6 @@
+{
+  "name": "CampusConnect",
+  "description": "Student Collaboration & Innovation Platform static frontend interface for project discovery, student directory, collaboration circles, teams, hackathons, and resources.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
