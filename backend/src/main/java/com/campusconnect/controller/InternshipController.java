@@ -1,62 +1,39 @@
 package com.campusconnect.controller;
 
 import com.campusconnect.entity.Internship;
-import com.campusconnect.entity.User;
 import com.campusconnect.service.InternshipService;
-import com.campusconnect.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/internships")
+@RestController
+@RequestMapping("/api/internships")
+@RequiredArgsConstructor
 public class InternshipController {
 
-    @Autowired
-    private InternshipService internshipService;
-
-    @Autowired
-    private UserService userService;
+    private final InternshipService internshipService;
 
     @GetMapping
-    public String listInternships(@RequestParam(value = "query", required = false) String query,
-                                  @RequestParam(value = "type", required = false) String type,
-                                  @AuthenticationPrincipal UserDetails userDetails,
-                                  Model model) {
-
-        User currentUser = userDetails != null ? userService.findByEmail(userDetails.getUsername()).orElse(null) : null;
-        List<Internship> internships = internshipService.searchInternships(query, type);
-        Set<Long> bookmarkedIds = internshipService.getBookmarkedInternshipIds(currentUser);
-
-        model.addAttribute("internships", internships);
-        model.addAttribute("bookmarkedIds", bookmarkedIds);
-        model.addAttribute("query", query);
-        model.addAttribute("type", type);
-        model.addAttribute("currentUser", currentUser);
-        return "internships/list";
+    public ResponseEntity<List<Internship>> list() {
+        return ResponseEntity.ok(internshipService.getAll());
     }
 
-    @PostMapping("/{id}/bookmark")
-    public String toggleBookmark(@PathVariable("id") Long id,
-                                 @AuthenticationPrincipal UserDetails userDetails,
-                                 RedirectAttributes redirectAttributes) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Internship> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(internshipService.getById(id));
+    }
 
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
+    @PostMapping
+    public ResponseEntity<Internship> create(@RequestBody Map<String, Object> body) {
+        return ResponseEntity.ok(internshipService.create(body));
+    }
 
-        boolean bookmarked = internshipService.toggleBookmark(id, currentUser);
-        if (bookmarked) {
-            redirectAttributes.addFlashAttribute("successMessage", "Internship opportunity saved to your bookmarks!");
-        } else {
-            redirectAttributes.addFlashAttribute("infoMessage", "Removed from bookmarks.");
-        }
-        return "redirect:/internships";
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
+        internshipService.delete(id);
+        return ResponseEntity.ok(Map.of("message", "Internship deleted"));
     }
 }
