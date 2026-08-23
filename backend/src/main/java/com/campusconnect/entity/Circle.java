@@ -1,9 +1,16 @@
 package com.campusconnect.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "circles")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Circle {
 
     @Id
@@ -13,38 +20,21 @@ public class Circle {
     @Column(nullable = false, unique = true)
     private String name;
 
-    private String category;
-    
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String icon = "🌐";
+    private String category;
+    private String iconEmoji;
+
+    @Column(nullable = false)
+    @Builder.Default
     private int memberCount = 0;
 
-    public Circle() {}
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    public Circle(String name, String category, String description, String icon) {
-        this.name = name;
-        this.category = category;
-        this.description = description;
-        this.icon = icon;
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
-
-    public int getMemberCount() { return memberCount; }
-    public void setMemberCount(int memberCount) { this.memberCount = memberCount; }
+    @OneToMany(mappedBy = "circle", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CircleMembership> memberships = new ArrayList<>();
 }
