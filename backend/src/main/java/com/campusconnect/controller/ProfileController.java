@@ -1,92 +1,37 @@
 package com.campusconnect.controller;
 
 import com.campusconnect.entity.StudentProfile;
-import com.campusconnect.entity.User;
 import com.campusconnect.service.ProfileService;
-import com.campusconnect.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/profile")
+@RestController
+@RequestMapping("/api/profiles")
+@RequiredArgsConstructor
 public class ProfileController {
 
-    @Autowired
-    private ProfileService profileService;
+    private final ProfileService profileService;
 
-    @Autowired
-    private UserService userService;
-
-    @GetMapping
-    public String viewMyProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        StudentProfile profile = profileService.getProfileByUser(currentUser);
-        model.addAttribute("profile", profile);
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("isOwnProfile", true);
-        return "profile/view";
+    @GetMapping("/me")
+    public ResponseEntity<StudentProfile> getMyProfile(Authentication auth) {
+        var user = profileService.getUserByEmail(auth.getName());
+        return ResponseEntity.ok(profileService.getByUserId(user.getId()));
     }
 
-    @GetMapping("/{id}")
-    public String viewProfileById(@PathVariable("id") Long id,
-                                  @AuthenticationPrincipal UserDetails userDetails,
-                                  Model model) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        StudentProfile profile = profileService.getProfileById(id);
-        if (profile == null) return "redirect:/directory";
-
-        boolean isOwnProfile = currentUser != null && currentUser.getId().equals(profile.getUser().getId());
-        model.addAttribute("profile", profile);
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("isOwnProfile", isOwnProfile);
-        return "profile/view";
+    @PutMapping("/me")
+    public ResponseEntity<StudentProfile> updateMyProfile(Authentication auth,
+                                                          @RequestBody Map<String, Object> updates) {
+        var user = profileService.getUserByEmail(auth.getName());
+        return ResponseEntity.ok(profileService.updateProfile(user.getId(), updates));
     }
 
-    @GetMapping("/edit")
-    public String editProfilePage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        StudentProfile profile = profileService.getProfileByUser(currentUser);
-        model.addAttribute("profile", profile);
-        return "profile/edit";
-    }
-
-    @PostMapping("/edit")
-    public String handleEditProfile(@AuthenticationPrincipal UserDetails userDetails,
-                                    @RequestParam("fullName") String fullName,
-                                    @RequestParam("college") String college,
-                                    @RequestParam("department") String department,
-                                    @RequestParam("academicYear") String academicYear,
-                                    @RequestParam("skills") String skills,
-                                    @RequestParam("aboutMe") String aboutMe,
-                                    @RequestParam("githubUrl") String githubUrl,
-                                    @RequestParam("linkedinUrl") String linkedinUrl,
-                                    @RequestParam(value = "resumeFile", required = false) MultipartFile resumeFile,
-                                    @RequestParam(value = "picFile", required = false) MultipartFile picFile,
-                                    RedirectAttributes redirectAttributes) {
-
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        try {
-            profileService.updateProfile(currentUser, fullName, college, department, academicYear,
-                    skills, aboutMe, githubUrl, linkedinUrl, resumeFile, picFile);
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
-        } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error uploading files: " + e.getMessage());
-        }
-
-        return "redirect:/profile";
+    @GetMapping("/{userId}")
+    public ResponseEntity<StudentProfile> getProfile(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getByUserId(userId));
     }
 }
