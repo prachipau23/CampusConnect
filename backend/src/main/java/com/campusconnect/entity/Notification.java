@@ -1,6 +1,5 @@
 package com.campusconnect.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,7 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "notifications")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Notification {
 
     @Id
@@ -19,7 +17,6 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "target_user_id", nullable = false)
-    @JsonIgnoreProperties({"profile", "passwordHash", "hibernateLazyInitializer", "handler"})
     private User targetUser;
 
     @Column(nullable = false)
