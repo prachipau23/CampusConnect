@@ -1,14 +1,14 @@
 # ===== Stage 1: Maven build =====
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Copy Maven wrapper and POM first (layer cache optimization)
+# Copy pom.xml and cache dependencies
 COPY pom.xml .
-RUN apk add --no-cache maven && mvn dependency:go-offline -q
+RUN mvn dependency:go-offline -B
 
-# Copy source and build
+# Copy source and build jar
 COPY src ./src
-RUN mvn clean package -DskipTests -q
+RUN mvn clean package -DskipTests -B
 
 # ===== Stage 2: Slim JRE runtime =====
 FROM eclipse-temurin:21-jre-alpine AS runtime
@@ -18,9 +18,9 @@ WORKDIR /app
 RUN addgroup -S campusconnect && adduser -S campusconnect -G campusconnect
 USER campusconnect
 
-# Copy the fat JAR from build stage
+# Copy the packaged JAR from build stage
 COPY --from=builder /app/target/campusconnect-backend-1.0.0.jar app.jar
 
-# Render assigns PORT via env var
+# Render assigns PORT via environment variable
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
