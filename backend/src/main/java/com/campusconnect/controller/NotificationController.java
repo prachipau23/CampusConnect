@@ -1,60 +1,54 @@
 package com.campusconnect.controller;
 
 import com.campusconnect.entity.Notification;
-import com.campusconnect.entity.User;
 import com.campusconnect.service.NotificationService;
-import com.campusconnect.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/notifications")
+@RestController
+@RequestMapping("/api/notifications")
+@RequiredArgsConstructor
 public class NotificationController {
 
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private UserService userService;
+    private final NotificationService notificationService;
 
     @GetMapping
-    public String viewNotifications(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        List<Notification> notifications = notificationService.getUserNotifications(currentUser);
-        long unreadCount = notificationService.getUnreadCount(currentUser);
-
-        model.addAttribute("notifications", notifications);
-        model.addAttribute("unreadCount", unreadCount);
-        model.addAttribute("currentUser", currentUser);
-        return "notifications/list";
+    public ResponseEntity<List<Notification>> getMyNotifications(Authentication auth) {
+        return ResponseEntity.ok(notificationService.getForUser(auth.getName()));
     }
 
-    @PostMapping("/{id}/toggle-read")
-    public String toggleRead(@PathVariable("id") Long id,
-                             @AuthenticationPrincipal UserDetails userDetails) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser != null) {
-            notificationService.toggleRead(id, currentUser);
-        }
-        return "redirect:/notifications";
+    /**
+     * GET /api/notifications/{id} — returns the notification details
+     * AND the resolved redirect target URL based on entity type + id.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getById(@PathVariable Long id) {
+        Notification n = notificationService.getById(id);
+        String redirectUrl = notificationService.resolveRedirectUrl(id);
+        return ResponseEntity.ok(Map.of(
+                "id", n.getId(),
+                "message", n.getMessage(),
+                "targetEntityType", n.getTargetEntityType(),
+                "targetEntityId", n.getTargetEntityId() != null ? n.getTargetEntityId() : "",
+                "read", n.isRead(),
+                "createdAt", n.getCreatedAt(),
+                "redirectUrl", redirectUrl
+        ));
+    }
+
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<Notification> markRead(@PathVariable Long id) {
+        return ResponseEntity.ok(notificationService.markRead(id));
     }
 
     @PostMapping("/mark-all-read")
-    public String markAllRead(@AuthenticationPrincipal UserDetails userDetails, RedirectAttributes redirectAttributes) {
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser != null) {
-            notificationService.markAllRead(currentUser);
-            redirectAttributes.addFlashAttribute("successMessage", "All notifications marked as read.");
-        }
-        return "redirect:/notifications";
+    public ResponseEntity<Map<String, String>> markAllRead(Authentication auth) {
+        notificationService.markAllRead(auth.getName());
+        return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
     }
 }
