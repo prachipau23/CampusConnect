@@ -3,77 +3,59 @@ package com.campusconnect.service;
 import com.campusconnect.entity.StudentProfile;
 import com.campusconnect.entity.User;
 import com.campusconnect.repository.StudentProfileRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.campusconnect.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
+import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ProfileService {
 
-    @Autowired
-    private StudentProfileRepository profileRepository;
+    private final StudentProfileRepository profileRepository;
+    private final UserRepository userRepository;
 
-    @Value("${file.upload-dir:./uploads}")
-    private String uploadDir;
-
-    public StudentProfile getProfileByUser(User user) {
-        return profileRepository.findByUser(user)
-                .orElseGet(() -> {
-                    StudentProfile p = new StudentProfile();
-                    p.setUser(user);
-                    return profileRepository.save(p);
-                });
+    public StudentProfile getByUserId(Long userId) {
+        return profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for user: " + userId));
     }
 
-    public StudentProfile getProfileById(Long id) {
-        return profileRepository.findById(id).orElse(null);
+    public StudentProfile getById(Long profileId) {
+        return profileRepository.findById(profileId)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found: " + profileId));
+    }
+
+    public List<StudentProfile> getAll() {
+        return profileRepository.findAll();
+    }
+
+    public List<StudentProfile> search(String query) {
+        if (query == null || query.isBlank()) return profileRepository.findAll();
+        return profileRepository.search(query);
     }
 
     @Transactional
-    public StudentProfile updateProfile(User user, String fullName, String college, String department,
-                                         String academicYear, String skills, String aboutMe,
-                                         String githubUrl, String linkedinUrl,
-                                         MultipartFile resumeFile, MultipartFile picFile) throws IOException {
+    public StudentProfile updateProfile(Long userId, Map<String, Object> updates) {
+        StudentProfile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
 
-        StudentProfile profile = getProfileByUser(user);
-        profile.setFullName(fullName);
-        profile.setCollege(college);
-        profile.setDepartment(department);
-        profile.setAcademicYear(academicYear);
-        profile.setSkills(skills);
-        profile.setAboutMe(aboutMe);
-        profile.setGithubUrl(githubUrl);
-        profile.setLinkedinUrl(linkedinUrl);
+        if (updates.containsKey("fullName")) profile.setFullName((String) updates.get("fullName"));
+        if (updates.containsKey("department")) profile.setDepartment((String) updates.get("department"));
+        if (updates.containsKey("yearOfStudy")) profile.setYearOfStudy((String) updates.get("yearOfStudy"));
+        if (updates.containsKey("bio")) profile.setBio((String) updates.get("bio"));
+        if (updates.containsKey("skills")) profile.setSkills((String) updates.get("skills"));
+        if (updates.containsKey("githubUrl")) profile.setGithubUrl((String) updates.get("githubUrl"));
+        if (updates.containsKey("linkedinUrl")) profile.setLinkedinUrl((String) updates.get("linkedinUrl"));
+        if (updates.containsKey("performanceNotes")) profile.setPerformanceNotes((String) updates.get("performanceNotes"));
 
-        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        if (resumeFile != null && !resumeFile.isEmpty()) {
-            String resumeFilename = "resume_" + user.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + resumeFile.getOriginalFilename();
-            Path targetPath = uploadPath.resolve(resumeFilename);
-            Files.copy(resumeFile.getInputStream(), targetPath);
-            profile.setResumePath("/uploads/" + resumeFilename);
-        }
-
-        if (picFile != null && !picFile.isEmpty()) {
-            String picFilename = "pic_" + user.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + picFile.getOriginalFilename();
-            Path targetPath = uploadPath.resolve(picFilename);
-            Files.copy(picFile.getInputStream(), targetPath);
-            profile.setProfilePicPath("/uploads/" + picFilename);
-        }
-
-        profile.calculateCompletion();
         return profileRepository.save(profile);
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
     }
 }
