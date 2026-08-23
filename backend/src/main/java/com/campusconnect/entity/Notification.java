@@ -1,5 +1,6 @@
 package com.campusconnect.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -9,24 +10,29 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "notifications")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "target_user_id", nullable = false)
+    @JsonIgnoreProperties({"profile", "passwordHash", "hibernateLazyInitializer", "handler"})
     private User targetUser;
+
+    @Column(nullable = false)
+    private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EntityType targetEntityType;
+    private EntityType entityType;
 
-    private Long targetEntityId;
+    private Long entityId;
 
     @Column(nullable = false)
     @Builder.Default
@@ -37,6 +43,6 @@ public class Notification {
     private LocalDateTime createdAt;
 
     public enum EntityType {
-        PROJECT, TEAM, HACKATHON, INTERNSHIP, CIRCLE, RESOURCE, WORKSPACE, PROFILE
+        PROJECT, TEAM, CIRCLE, HACKATHON, INTERNSHIP, SYSTEM
     }
 }
