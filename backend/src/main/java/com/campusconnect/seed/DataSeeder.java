@@ -417,21 +417,21 @@ public class DataSeeder implements CommandLineRunner {
     private void seedNotifications(List<User> students, List<Project> projects,
                                    List<Team> teams, List<Circle> circles) {
         Object[][] notifData = {
-            {0, "Your project 'CampusConnect Platform' received 12 new stars!", EntityType.PROJECT, 0L},
-            {1, "New team 'NeuralNinjas' is looking for ML researchers. Apply now!", EntityType.TEAM, 0L},
-            {2, "Smart India Hackathon registration closes in 3 days!", EntityType.HACKATHON, 0L},
-            {3, "Google internship deadline is approaching — apply before Oct 15!", EntityType.INTERNSHIP, 0L},
-            {4, "You've been added to the 'RoboRangers' team.", EntityType.TEAM, 3L},
-            {5, "Kavya Reddy commented on your Data Science project.", EntityType.PROJECT, 5L},
-            {6, "New resource uploaded: 'Kubernetes for Developers' — check it out!", EntityType.RESOURCE, 6L},
-            {7, "Ananya Singh invited you to join the 'Web & App Developers' circle.", EntityType.CIRCLE, 0L},
-            {8, "Decentralized Voting System project needs a frontend developer.", EntityType.PROJECT, 4L},
-            {9, "Microsoft Imagine Cup registration is open. Team up and register!", EntityType.HACKATHON, 4L},
-            {10, "Infosys DevOps internship has new openings!", EntityType.INTERNSHIP, 3L},
-            {11, "New workspace post in 'CloudCrafters': deployment pipeline is live.", EntityType.WORKSPACE, 5L},
-            {12, "Your profile was viewed 45 times this week.", EntityType.PROFILE, 0L},
-            {13, "SecureStack team leader posted a new update in the workspace.", EntityType.WORKSPACE, 4L},
-            {14, "Samsung Research ML internship deadline: Sep 15. Apply now!", EntityType.INTERNSHIP, 4L},
+            {0, "New Project Star", "Your project 'CampusConnect Platform' received 12 new stars!", EntityType.PROJECT, 0L},
+            {1, "Team Recruitment", "New team 'NeuralNinjas' is looking for ML researchers. Apply now!", EntityType.TEAM, 0L},
+            {2, "Hackathon Reminder", "Smart India Hackathon registration closes in 3 days!", EntityType.HACKATHON, 0L},
+            {3, "Internship Deadline", "Google internship deadline is approaching — apply before Oct 15!", EntityType.INTERNSHIP, 0L},
+            {4, "Team Invitation", "You've been added to the 'RoboRangers' team.", EntityType.TEAM, 3L},
+            {5, "Project Feedback", "Kavya Reddy commented on your Data Science project.", EntityType.PROJECT, 5L},
+            {6, "New Learning Resource", "New resource uploaded: 'Kubernetes for Developers' — check it out!", EntityType.RESOURCE, 6L},
+            {7, "Circle Invite", "Ananya Singh invited you to join the 'Web & App Developers' circle.", EntityType.CIRCLE, 0L},
+            {8, "Team Need", "Decentralized Voting System project needs a frontend developer.", EntityType.PROJECT, 4L},
+            {9, "Hackathon Open", "Microsoft Imagine Cup registration is open. Team up and register!", EntityType.HACKATHON, 4L},
+            {10, "Internship Update", "Infosys DevOps internship has new openings!", EntityType.INTERNSHIP, 3L},
+            {11, "Workspace Message", "New workspace post in 'CloudCrafters': deployment pipeline is live.", EntityType.WORKSPACE, 5L},
+            {12, "Profile View", "Your profile was viewed 45 times this week.", EntityType.PROFILE, 0L},
+            {13, "Workspace Update", "SecureStack team leader posted a new update in the workspace.", EntityType.WORKSPACE, 4L},
+            {14, "Internship Application", "Samsung Research ML internship deadline: Sep 15. Apply now!", EntityType.INTERNSHIP, 4L},
         };
 
         for (Object[] nd : notifData) {
@@ -439,9 +439,10 @@ public class DataSeeder implements CommandLineRunner {
             if (studentIdx >= students.size()) continue;
             Notification n = Notification.builder()
                     .targetUser(students.get(studentIdx))
-                    .message((String) nd[1])
-                    .targetEntityType((EntityType) nd[2])
-                    .targetEntityId((Long) nd[3])
+                    .title((String) nd[1])
+                    .message((String) nd[2])
+                    .entityType((EntityType) nd[3])
+                    .entityId((Long) nd[4])
                     .read(studentIdx % 3 == 0)
                     .build();
             notificationRepository.save(n);
