@@ -1,6 +1,7 @@
 package com.campusconnect.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "resources")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Resource {
 
     @Id
@@ -23,21 +25,28 @@ public class Resource {
     private String description;
 
     @Column(nullable = false)
-    private String fileType;
+    private String category;
 
     @Column(nullable = false)
-    private String originalFileName;
+    private String fileName;
+
+    @Column(nullable = false)
+    private String contentType;
+
+    @Column(nullable = false)
+    private Long fileSize;
 
     @JsonIgnore
-    @Lob
-    @Column(nullable = false, columnDefinition = "BYTEA")
+    @Column(name = "file_data", columnDefinition = "BYTEA")
     private byte[] fileData;
 
-    private String category;
-    private long fileSizeBytes;
+    @Column(nullable = false)
+    @Builder.Default
+    private int downloadCount = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploaded_by", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "uploaded_by_id", nullable = false)
+    @JsonIgnoreProperties({"profile", "passwordHash", "hibernateLazyInitializer", "handler"})
     private User uploadedBy;
 
     @CreationTimestamp
