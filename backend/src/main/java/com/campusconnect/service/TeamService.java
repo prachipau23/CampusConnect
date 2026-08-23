@@ -1,131 +1,115 @@
 package com.campusconnect.service;
 
-import com.campusconnect.entity.*;
+import com.campusconnect.entity.Team;
+import com.campusconnect.entity.TeamMember;
+import com.campusconnect.entity.User;
+import com.campusconnect.entity.WorkspacePost;
 import com.campusconnect.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class TeamService {
 
-    @Autowired
-    private TeamRepository teamRepository;
+    private final TeamRepository teamRepository;
+    private final TeamMemberRepository memberRepository;
+    private final WorkspacePostRepository workspacePostRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private TeamMemberRepository teamMemberRepository;
-
-    @Autowired
-    private TeamJoinRequestRepository teamJoinRequestRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    public List<Team> getAllTeams(String query, String status) {
-        return teamRepository.searchTeams(query, status);
+    public List<Team> getAll() {
+        return teamRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    public Team getTeamById(Long id) {
-        return teamRepository.findById(id).orElse(null);
+    public Team getById(Long id) {
+        return teamRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found: " + id));
     }
 
     @Transactional
-    public Team createTeam(User creator, String name, String projectTitle, String description,
-                           String requiredSkills, int targetMemberCount, String deadline) {
+    public Team create(Map<String, Object> body, String leaderEmail) {
+        User leader = userRepository.findByEmail(leaderEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        Team team = new Team();
-        team.setCreatedBy(creator);
-        team.setName(name);
-        team.setProjectTitle(projectTitle);
-        team.setDescription(description);
-        team.setRequiredSkills(requiredSkills);
-        team.setTargetMemberCount(targetMemberCount);
-        team.setDeadline(deadline);
-        team.setStatus("OPEN");
-        team.setCurrentMemberCount(1);
+        int maxSize = body.containsKey("maxSize") ? (Integer) body.get("maxSize") : 5;
+        Team team = Team.builder()
+                .name((String) body.get("name"))
+                .description((String) body.get("description"))
+                .maxSize(maxSize)
+                .status(Team.TeamStatus.OPEN)
+                .build();
+        team = teamRepository.save(team);
 
-        Team savedTeam = teamRepository.save(team);
-
-        TeamMember leader = new TeamMember(savedTeam, creator, "Leader");
-        teamMemberRepository.save(leader);
-
-        return savedTeam;
+        TeamMember leadMember = TeamMember.builder()
+                .team(team)
+                .user(leader)
+                .role(TeamMember.MemberRole.LEAD)
+                .build();
+        memberRepository.save(leadMember);
+        return team;
     }
 
     @Transactional
-    public boolean requestToJoin(Long teamId, User applicant, String message) {
-        Team team = teamRepository.findById(teamId).orElse(null);
-        if (team == null || "CLOSED".equalsIgnoreCase(team.getStatus())) return false;
+    public Map<String, String> join(Long teamId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Team team = getById(teamId);
 
-        if (teamMemberRepository.existsByTeamAndUser(team, applicant)) return false;
-        if (teamJoinRequestRepository.existsByTeamAndApplicantAndStatus(team, applicant, "PENDING")) return false;
-
-        TeamJoinRequest req = new TeamJoinRequest();
-        req.setTeam(team);
-        req.setApplicant(applicant);
-        req.setMessage(message);
-        req.setStatus("PENDING");
-        teamJoinRequestRepository.save(req);
-
-        // Send notification to team creator
-        notificationService.sendNotification(
-            team.getCreatedBy(),
-            "New Team Join Request",
-            applicant.getEmail() + " requested to join " + team.getName(),
-            "👥",
-            "TEAM_INVITE"
-        );
-
-        return true;
-    }
-
-    @Transactional
-    public boolean handleJoinRequest(Long requestId, User leader, boolean accept) {
-        TeamJoinRequest req = teamJoinRequestRepository.findById(requestId).orElse(null);
-        if (req == null || !req.getStatus().equals("PENDING")) return false;
-
-        Team team = req.getTeam();
-        if (!team.getCreatedBy().getId().equals(leader.getId())) return false;
-
-        if (accept) {
-            req.setStatus("ACCEPTED");
-            teamMemberRepository.save(new TeamMember(team, req.getApplicant(), "Member"));
-            team.setCurrentMemberCount(team.getCurrentMemberCount() + 1);
-            if (team.getCurrentMemberCount() >= team.getTargetMemberCount()) {
-                team.setStatus("CLOSED");
-            }
-            teamRepository.save(team);
-
-            notificationService.sendNotification(
-                req.getApplicant(),
-                "Team Application Accepted!",
-                "Congratulations! You were accepted into team " + team.getName(),
-                "🎉",
-                "JOIN_APPROVAL"
-            );
-        } else {
-            req.setStatus("REJECTED");
-            notificationService.sendNotification(
-                req.getApplicant(),
-                "Team Application Status",
-                "Your request to join team " + team.getName() + " was not accepted.",
-                "ℹ️",
-                "TEAM_INVITE"
-            );
+        if (memberRepository.existsByTeamIdAndUserId(teamId, user.getId())) {
+            return Map.of("message", "Already a member");
+        }
+        if (team.getStatus() == Team.TeamStatus.CLOSED) {
+            return Map.of("message", "Team is closed");
+        }
+        long currentSize = memberRepository.countByTeamId(teamId);
+        if (currentSize >= team.getMaxSize()) {
+            return Map.of("message", "Team is full");
         }
 
-        teamJoinRequestRepository.save(req);
-        return true;
+        TeamMember member = TeamMember.builder().team(team).user(user).build();
+        memberRepository.save(member);
+
+        if (currentSize + 1 >= team.getMaxSize()) {
+            team.setStatus(Team.TeamStatus.CLOSED);
+            teamRepository.save(team);
+        }
+        return Map.of("message", "Joined team successfully");
     }
 
     @Transactional
-    public void closeRecruitment(Long teamId, User leader) {
-        Team team = teamRepository.findById(teamId).orElse(null);
-        if (team != null && team.getCreatedBy().getId().equals(leader.getId())) {
-            team.setStatus("CLOSED");
+    public Map<String, String> leave(Long teamId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        TeamMember member = memberRepository.findByTeamIdAndUserId(teamId, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Not a member"));
+        memberRepository.delete(member);
+        Team team = getById(teamId);
+        if (team.getStatus() == Team.TeamStatus.CLOSED) {
+            team.setStatus(Team.TeamStatus.OPEN);
             teamRepository.save(team);
         }
+        return Map.of("message", "Left team");
+    }
+
+    public List<WorkspacePost> getWorkspacePosts(Long teamId) {
+        return workspacePostRepository.findByTeamIdOrderByCreatedAtDesc(teamId);
+    }
+
+    @Transactional
+    public WorkspacePost addWorkspacePost(Long teamId, String content, String postType, String authorEmail) {
+        User author = userRepository.findByEmail(authorEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Team team = getById(teamId);
+        WorkspacePost post = WorkspacePost.builder()
+                .team(team)
+                .author(author)
+                .content(content)
+                .postType(postType != null ? postType : "UPDATE")
+                .build();
+        return workspacePostRepository.save(post);
     }
 }
