@@ -1,99 +1,59 @@
 package com.campusconnect.controller;
 
 import com.campusconnect.entity.Team;
-import com.campusconnect.entity.User;
+import com.campusconnect.entity.WorkspacePost;
 import com.campusconnect.service.TeamService;
-import com.campusconnect.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/teams")
+@RestController
+@RequestMapping("/api/teams")
+@RequiredArgsConstructor
 public class TeamController {
 
-    @Autowired
-    private TeamService teamService;
-
-    @Autowired
-    private UserService userService;
+    private final TeamService teamService;
 
     @GetMapping
-    public String listTeams(@RequestParam(value = "query", required = false) String query,
-                            @RequestParam(value = "status", required = false) String status,
-                            @AuthenticationPrincipal UserDetails userDetails,
-                            Model model) {
-
-        User currentUser = userDetails != null ? userService.findByEmail(userDetails.getUsername()).orElse(null) : null;
-        List<Team> teams = teamService.getAllTeams(query, status);
-
-        model.addAttribute("teams", teams);
-        model.addAttribute("query", query);
-        model.addAttribute("status", status);
-        model.addAttribute("currentUser", currentUser);
-        return "teams/list";
+    public ResponseEntity<List<Team>> list() {
+        return ResponseEntity.ok(teamService.getAll());
     }
 
-    @GetMapping("/create")
-    public String showCreateTeamForm(Model model) {
-        model.addAttribute("team", new Team());
-        return "teams/create";
+    @GetMapping("/{id}")
+    public ResponseEntity<Team> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(teamService.getById(id));
     }
 
-    @PostMapping("/create")
-    public String handleCreateTeam(@AuthenticationPrincipal UserDetails userDetails,
-                                   @RequestParam("name") String name,
-                                   @RequestParam("projectTitle") String projectTitle,
-                                   @RequestParam("description") String description,
-                                   @RequestParam("requiredSkills") String requiredSkills,
-                                   @RequestParam("targetMemberCount") int targetMemberCount,
-                                   @RequestParam("deadline") String deadline,
-                                   RedirectAttributes redirectAttributes) {
-
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        Team team = teamService.createTeam(currentUser, name, projectTitle, description, requiredSkills, targetMemberCount, deadline);
-        redirectAttributes.addFlashAttribute("successMessage", "Team post created! Members can now request to join.");
-        return "redirect:/workspace/" + team.getId();
+    @PostMapping
+    public ResponseEntity<Team> create(@RequestBody Map<String, Object> body, Authentication auth) {
+        return ResponseEntity.ok(teamService.create(body, auth.getName()));
     }
 
     @PostMapping("/{id}/join")
-    public String handleJoinRequest(@PathVariable("id") Long id,
-                                    @AuthenticationPrincipal UserDetails userDetails,
-                                    @RequestParam("message") String message,
-                                    RedirectAttributes redirectAttributes) {
-
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-
-        boolean requested = teamService.requestToJoin(id, currentUser, message);
-        if (requested) {
-            redirectAttributes.addFlashAttribute("successMessage", "Join request sent to the team leader!");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "Could not send join request (already a member or request pending).");
-        }
-        return "redirect:/teams";
+    public ResponseEntity<Map<String, String>> join(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(teamService.join(id, auth.getName()));
     }
 
-    @PostMapping("/request/{requestId}/respond")
-    public String handleRespondToRequest(@PathVariable("requestId") Long requestId,
-                                         @RequestParam("accept") boolean accept,
-                                         @RequestParam("teamId") Long teamId,
-                                         @AuthenticationPrincipal UserDetails userDetails,
-                                         RedirectAttributes redirectAttributes) {
+    @DeleteMapping("/{id}/leave")
+    public ResponseEntity<Map<String, String>> leave(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(teamService.leave(id, auth.getName()));
+    }
 
-        User currentUser = userService.findByEmail(userDetails.getUsername()).orElse(null);
-        if (currentUser != null) {
-            teamService.handleJoinRequest(requestId, currentUser, accept);
-            redirectAttributes.addFlashAttribute("successMessage", accept ? "Request accepted!" : "Request rejected.");
-        }
-        return "redirect:/workspace/" + teamId;
+    // Workspace endpoints nested under team
+    @GetMapping("/{id}/workspace")
+    public ResponseEntity<List<WorkspacePost>> getWorkspace(@PathVariable Long id) {
+        return ResponseEntity.ok(teamService.getWorkspacePosts(id));
+    }
+
+    @PostMapping("/{id}/workspace")
+    public ResponseEntity<WorkspacePost> addWorkspacePost(@PathVariable Long id,
+                                                           @RequestBody Map<String, String> body,
+                                                           Authentication auth) {
+        return ResponseEntity.ok(teamService.addWorkspacePost(
+                id, body.get("content"), body.get("postType"), auth.getName()));
     }
 }
