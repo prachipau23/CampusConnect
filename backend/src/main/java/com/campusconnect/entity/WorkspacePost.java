@@ -26,6 +26,10 @@ public class WorkspacePost {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private String postType = "UPDATE";
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

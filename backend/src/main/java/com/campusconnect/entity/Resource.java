@@ -23,27 +23,21 @@ public class Resource {
     private String description;
 
     @Column(nullable = false)
-    private String category;
+    private String fileType;
 
     @Column(nullable = false)
-    private String fileName;
-
-    @Column(nullable = false)
-    private String contentType;
-
-    @Column(nullable = false)
-    private Long fileSize;
+    private String originalFileName;
 
     @JsonIgnore
-    @Column(name = "file_data", columnDefinition = "BYTEA")
+    @Lob
+    @Column(nullable = false, columnDefinition = "BYTEA")
     private byte[] fileData;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private int downloadCount = 0;
+    private String category;
+    private long fileSizeBytes;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "uploaded_by_id", nullable = false)
+    @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;
 
     @CreationTimestamp
