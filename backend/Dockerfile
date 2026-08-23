@@ -12,5 +12,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/app.jar app.jar
 
+ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+ENTRYPOINT ["java", "-Dserver.address=0.0.0.0", "-Dserver.port=8080", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
