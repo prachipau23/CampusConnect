@@ -1,19 +1,14 @@
 package com.campusconnect.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "circles")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Circle {
 
     @Id
@@ -36,9 +31,4 @@ public class Circle {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "circle", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<CircleMembership> memberships = new ArrayList<>();
 }
