@@ -45,26 +45,51 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         try {
-            if (userRepository.count() > 0) {
-                log.info("Database already has data. Skipping seed.");
-                return;
+            log.info("=== Checking CampusConnect database seed status ===");
+
+            List<User> students;
+            List<User> admins;
+            if (userRepository.count() == 0) {
+                students = seedStudents();
+                admins = seedAdmins();
+            } else {
+                students = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.STUDENT).toList();
+                admins = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.TEACHER).toList();
             }
 
-            log.info("=== Seeding CampusConnect database ===");
+            if (projectRepository.count() == 0 && !students.isEmpty()) {
+                seedProjects(students);
+            }
 
-            List<User> students = seedStudents();
-            List<User> admins = seedAdmins();
-            List<Project> projects = seedProjects(students);
-            List<Circle> circles = seedCircles();
-            seedCircleMemberships(circles, students);
-            List<Team> teams = seedTeams(students, projects);
-            seedHackathons();
-            seedInternships();
-            seedResources(admins.get(0), students);
-            seedNotifications(students, projects, teams, circles);
+            if (circleRepository.count() == 0) {
+                List<Circle> circles = seedCircles();
+                if (!students.isEmpty()) seedCircleMemberships(circles, students);
+            }
 
-            log.info("=== Seed complete: {} students, {} projects, {} circles, {} teams ===",
-                    students.size(), projects.size(), circles.size(), teams.size());
+            if (teamRepository.count() == 0 && !students.isEmpty()) {
+                seedTeams(students, projectRepository.findAll());
+            }
+
+            if (hackathonRepository.count() == 0) {
+                seedHackathons();
+            }
+
+            if (internshipRepository.count() == 0) {
+                seedInternships();
+            }
+
+            if (resourceRepository.count() == 0) {
+                User uploader = !admins.isEmpty() ? admins.get(0) : (!students.isEmpty() ? students.get(0) : null);
+                if (uploader != null) {
+                    seedResources(uploader, students);
+                }
+            }
+
+            if (notificationRepository.count() == 0 && !students.isEmpty()) {
+                seedNotifications(students, projectRepository.findAll(), teamRepository.findAll(), circleRepository.findAll());
+            }
+
+            log.info("=== Seed check complete ===");
         } catch (Exception e) {
             log.error("Error during database seeding: {}", e.getMessage(), e);
         }

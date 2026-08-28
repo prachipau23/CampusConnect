@@ -16,6 +16,10 @@ import java.util.Map;
 public class HackathonService {
 
     private final HackathonRepository hackathonRepository;
+    private final com.campusconnect.repository.TeamRepository teamRepository;
+    private final com.campusconnect.repository.TeamMemberRepository teamMemberRepository;
+    private final com.campusconnect.repository.UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public List<Hackathon> getAll() {
         return hackathonRepository.findAllByOrderByStartDateAsc();
@@ -44,11 +48,6 @@ public class HackathonService {
                 .build();
         return hackathonRepository.save(h);
     }
-
-    private final com.campusconnect.repository.TeamRepository teamRepository;
-    private final com.campusconnect.repository.TeamMemberRepository teamMemberRepository;
-    private final com.campusconnect.repository.UserRepository userRepository;
-    private final NotificationService notificationService;
 
     @Transactional
     public com.campusconnect.entity.Team registerTeam(Long hackathonId, Map<String, Object> body, String userEmail) {
