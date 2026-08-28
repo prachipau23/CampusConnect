@@ -425,7 +425,7 @@ public class DataSeeder implements CommandLineRunner {
                 fileBytes = pdfContents[i % 2].getBytes();
             }
 
-            User uploader = i < 5 ? admin : students.get(i % students.size());
+            User uploader = (i < 5 || students.isEmpty()) ? admin : students.get(i % students.size());
             resourceService.createWithBytes(
                     (String) rd[0],
                     (String) rd[1],
