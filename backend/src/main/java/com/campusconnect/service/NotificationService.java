@@ -76,9 +76,11 @@ public class NotificationService {
                                            Notification.EntityType entityType, Long entityId) {
         Notification n = Notification.builder()
                 .targetUser(targetUser)
+                .title(entityType != null ? entityType.name() + " Update" : "CampusConnect Notification")
                 .message(message)
                 .targetEntityType(entityType)
                 .targetEntityId(entityId)
+                .read(false)
                 .build();
         return notificationRepository.save(n);
     }

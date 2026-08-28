@@ -20,7 +20,8 @@ public class Notification {
     private User targetUser;
 
     @Column(nullable = false)
-    private String title;
+    @Builder.Default
+    private String title = "CampusConnect Notification";
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
@@ -32,7 +33,7 @@ public class Notification {
     @Column(name = "target_entity_id")
     private Long targetEntityId;
 
-    @Column(name = "is_read", nullable = false)
+    @Column(name = "read", nullable = false)
     @Builder.Default
     private boolean read = false;
 
