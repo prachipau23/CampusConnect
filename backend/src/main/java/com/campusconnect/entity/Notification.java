@@ -37,6 +37,15 @@ public class Notification {
     @Builder.Default
     private boolean read = false;
 
+    @Column(name = "is_read", nullable = false)
+    @Builder.Default
+    private boolean isRead = false;
+
+    public void setRead(boolean read) {
+        this.read = read;
+        this.isRead = read;
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

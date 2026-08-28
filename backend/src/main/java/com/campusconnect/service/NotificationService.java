@@ -81,6 +81,7 @@ public class NotificationService {
                 .targetEntityType(entityType)
                 .targetEntityId(entityId)
                 .read(false)
+                .isRead(false)
                 .build();
         return notificationRepository.save(n);
     }
