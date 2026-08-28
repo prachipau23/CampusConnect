@@ -5,24 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Collaboration Circles – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
-  <style>
-    .circle-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-    }
-    .circle-icon-box {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-md);
-      background-color: var(--night-bordeaux-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-    }
-  </style>
 </head>
 <body>
 
@@ -35,81 +17,170 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Collaboration Circles</h1>
-        <p class="page-subtitle">Join interest-based student guilds to participate in peer discussions, paper readings, and workshops.</p>
+        <p class="page-subtitle">Join domain interest groups, discuss ideas, share resources, and find teammates.</p>
       </div>
-      <button class="btn btn-outline" onclick="showToast('Guild creation proposals are submitted to Faculty Mentors.', 'info')">
-        💡 Propose New Circle
+      <button class="btn btn-primary" onclick="openCreateCircleModal()">
+        ➕ Create New Circle
       </button>
     </div>
 
     <!-- Circles Grid -->
     <div class="grid grid-cols-2" id="circles-grid">
-      <!-- Populated via JS -->
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading circles...
+      </div>
     </div>
 
   </main>
+
+  <!-- Create Circle Modal -->
+  <div class="modal-backdrop" id="create-circle-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Domain Circle</h3>
+        <button class="modal-close" data-modal-close>&times;</button>
+      </div>
+      <form onsubmit="handleCreateCircle(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="circle-name">Circle Name *</label>
+            <input type="text" id="circle-name" class="form-control" placeholder="e.g. Autonomous Robotics Guild" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="circle-cat">Category *</label>
+            <select id="circle-cat" class="form-select" required>
+              <option value="Technology">Technology & Engineering</option>
+              <option value="AI & Data">AI & Data Science</option>
+              <option value="Design">Creative & UI/UX Design</option>
+              <option value="Entrepreneurship">Entrepreneurship & Startups</option>
+              <option value="Open Source">Open Source & Community</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="circle-desc">Description *</label>
+            <textarea id="circle-desc" class="form-control" rows="3" placeholder="Describe the purpose and activities of this circle..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+          <button type="submit" id="circle-submit-btn" class="btn btn-primary">Create Circle</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Footer -->
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let circlesList = getStoredData("circles", MOCK_DATA.circles);
+    let circlesList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderCircles();
+      loadCircles();
     });
 
-    function renderCircles() {
+    async function loadCircles() {
+      try {
+        circlesList = await apiGet("/api/circles");
+        renderCircles(circlesList);
+      } catch (err) {
+        document.getElementById("circles-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading circles</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderCircles(list) {
       const grid = document.getElementById("circles-grid");
       if (!grid) return;
 
-      grid.innerHTML = circlesList.map(c => `
-        <div class="card card-interactive" data-circle-id="${c.id}">
-          <div class="circle-card-header">
-            <div style="display: flex; align-items: center; gap: 0.85rem;">
-              <div class="circle-icon-box">${c.icon}</div>
-              <div>
-                <h3 style="font-size: 1.2rem; margin-bottom: 0.2rem;">${c.name}</h3>
-                <span class="badge badge-bordeaux">${c.category}</span>
-              </div>
-            </div>
-            <button class="btn btn-sm ${c.joined ? 'btn-outline' : 'btn-primary'}" onclick="toggleCircleJoin('${c.id}')">
-              ${c.joined ? '✓ Joined' : '+ Join Circle'}
-            </button>
+      if (!list || list.length === 0) {
+        grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+          <h3>No circles found</h3>
+          <p style="color: var(--stone-brown);">Create the first campus circle!</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(c => `
+        <div class="card card-interactive" data-circle-id="${c.id}" style="display: flex; flex-direction: column;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+            <span class="badge badge-bordeaux">${c.category || 'General'}</span>
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--night-bordeaux);">👥 ${c.memberCount || 1} Members</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="font-size: 1.75rem;">${c.icon || '⚡'}</div>
+            <h3 style="font-size: 1.25rem; color: var(--black);">${c.name}</h3>
           </div>
 
           <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
             ${c.description}
           </p>
 
-          <div style="background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.825rem;">
-            <strong style="color: var(--night-bordeaux);">🔥 Active Topic:</strong> ${c.activeDiscussions}
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; font-size: 0.825rem; color: var(--stone-brown);">
-            <span>👥 <strong>${c.membersCount}</strong> Peer Members</span>
-            <span>Lead: <strong>${c.leadName}</strong></span>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+            <span style="font-size: 0.825rem; color: var(--stone-brown);">Open Community</span>
+            <button class="btn btn-sm btn-primary" onclick="joinCircle('${c.id}', '${c.name}')">
+              Join Circle
+            </button>
           </div>
         </div>
       `).join('');
     }
 
-    function toggleCircleJoin(circleId) {
-      const target = circlesList.find(c => c.id === circleId);
-      if (target) {
-        target.joined = !target.joined;
-        if (target.joined) {
-          target.membersCount += 1;
-          showToast(`Joined ${target.name}!`, "success");
-        } else {
-          target.membersCount -= 1;
-          showToast(`Left ${target.name}.`, "info");
-        }
-        setStoredData("circles", circlesList);
-        renderCircles();
+    function openCreateCircleModal() {
+      if (!getAuthToken()) {
+        showToast("Please sign in to create a circle.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+      document.getElementById("create-circle-modal").classList.add("show");
+    }
+
+    async function handleCreateCircle(e) {
+      e.preventDefault();
+      const name = document.getElementById("circle-name").value.trim();
+      const category = document.getElementById("circle-cat").value;
+      const description = document.getElementById("circle-desc").value.trim();
+      const submitBtn = document.getElementById("circle-submit-btn");
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Creating...";
+
+      try {
+        await apiPost("/api/circles", { name, category, description, icon: "🚀" });
+        document.getElementById("create-circle-modal").classList.remove("show");
+        showToast(`Circle '${name}' created!`, "success");
+        loadCircles();
+      } catch (err) {
+        showToast(err.message || "Failed to create circle", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Create Circle";
+      }
+    }
+
+    async function joinCircle(id, name) {
+      if (!getAuthToken()) {
+        showToast("Please sign in to join circles.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+
+      try {
+        await apiPost(`/api/circles/${id}/join`, {});
+        showToast(`You have joined ${name}!`, "success");
+        loadCircles();
+      } catch (err) {
+        showToast(err.message || "Failed to join circle", "info");
       }
     }
   </script>

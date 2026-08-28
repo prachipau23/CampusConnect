@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/views/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'MENTOR')")
 public class AdminViewController {
 
     private final AdminService adminService;

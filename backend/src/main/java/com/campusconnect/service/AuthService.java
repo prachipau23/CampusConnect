@@ -57,6 +57,10 @@ public class AuthService {
                 .user(user)
                 .fullName(req.getFullName() != null ? req.getFullName() : req.getUsername())
                 .avatarInitials(initials)
+                .department(req.getDepartment())
+                .yearOfStudy(req.getYearOfStudy())
+                .skills(req.getSkills())
+                .bio(req.getBio())
                 .build();
         profileRepository.save(profile);
 

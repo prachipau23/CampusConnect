@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teams & Squads – CampusConnect</title>
+  <title>Project Teams – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -16,37 +16,19 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Project Teams & Squads</h1>
-        <p class="page-subtitle">Find teams looking for specific skills or register a new project team.</p>
+        <h1 class="page-title">Project Collaboration Teams</h1>
+        <p class="page-subtitle">Form cross-disciplinary teams, recruit developers & designers, and collaborate in team workspaces.</p>
       </div>
-      <button class="btn btn-primary" data-modal-target="create-team-modal">
-        ➕ Form New Team
+      <button class="btn btn-primary" onclick="openCreateTeamModal()">
+        ➕ Create New Team
       </button>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-      <div class="search-input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" id="team-search" class="form-control" placeholder="Search by team name or project..." oninput="filterTeams()">
+    <!-- Teams Grid -->
+    <div class="grid grid-cols-2" id="teams-grid">
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading teams...
       </div>
-
-      <div style="min-width: 180px;">
-        <select id="team-role-filter" class="form-select" onchange="filterTeams()">
-          <option value="">All Roles Needed</option>
-          <option value="DevOps">DevOps Engineer</option>
-          <option value="Embedded">Embedded C</option>
-          <option value="Frontend">Frontend Dev</option>
-          <option value="Mobile">Mobile App Dev</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Teams Cards Grid -->
-    <div class="grid grid-cols-3" id="teams-grid">
-      <!-- Populated via JS -->
     </div>
 
   </main>
@@ -55,34 +37,29 @@
   <div class="modal-backdrop" id="create-team-modal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">Form New Project Team</h3>
+        <h3 class="modal-title">Create Collaboration Team</h3>
         <button class="modal-close" data-modal-close>&times;</button>
       </div>
       <form onsubmit="handleCreateTeam(event)">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Team Name *</label>
-            <input type="text" id="tm-name" class="form-control" placeholder="e.g. Team CampusConnect Core" required>
+            <label class="form-label" for="team-name">Team Name *</label>
+            <input type="text" id="team-name" class="form-control" placeholder="e.g. AI Core Engineering Squad" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Associated Project Title *</label>
-            <input type="text" id="tm-project" class="form-control" placeholder="e.g. CampusConnect Innovation Platform" required>
+            <label class="form-label" for="team-desc">Team Goal / Description *</label>
+            <textarea id="team-desc" class="form-control" rows="3" placeholder="What is your team building and what skills are needed?" required></textarea>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Roles Needed (comma separated) *</label>
-            <input type="text" id="tm-roles" class="form-control" placeholder="e.g. DevOps Engineer, QA Engineer" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Team Description</label>
-            <textarea id="tm-desc" class="form-control" rows="3" placeholder="Explain team goals and expected commitment..."></textarea>
+            <label class="form-label" for="team-max-size">Max Team Size</label>
+            <input type="number" id="team-max-size" class="form-control" value="5" min="2" max="10">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Team</button>
+          <button type="submit" id="team-submit-btn" class="btn btn-primary">Create Team</button>
         </div>
       </form>
     </div>
@@ -92,90 +69,122 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let teamsList = getStoredData("teams", MOCK_DATA.teams);
+    let teamsList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderTeams(teamsList);
+      loadTeams();
     });
+
+    async function loadTeams() {
+      try {
+        teamsList = await apiGet("/api/teams");
+        renderTeams(teamsList);
+      } catch (err) {
+        document.getElementById("teams-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading teams</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
 
     function renderTeams(list) {
       const grid = document.getElementById("teams-grid");
       if (!grid) return;
 
-      if (list.length === 0) {
-        grid.innerHTML = `<div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
-          <h3>No teams matched</h3>
-          <p style="color: var(--stone-brown);">Try adjusting your search criteria.</p>
+      if (!list || list.length === 0) {
+        grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+          <h3>No teams found</h3>
+          <p style="color: var(--stone-brown);">Create the first team to begin collaborating!</p>
         </div>`;
         return;
       }
 
-      grid.innerHTML = list.map(t => `
-        <div class="card card-interactive" data-team-id="${t.id}" style="display: flex; flex-direction: column;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-            <span class="badge badge-bordeaux">${t.status}</span>
-            <span style="font-size: 0.8rem; font-weight: 600; color: var(--stone-brown);">👥 ${t.membersCount} Members</span>
-          </div>
+      grid.innerHTML = list.map(t => {
+        const isOpen = t.status === 'OPEN';
+        const projectTitle = t.linkedProject ? t.linkedProject.title : 'Independent Initiative';
 
-          <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">${t.name}</h3>
-          <div style="font-size: 0.85rem; color: var(--night-bordeaux); font-weight: 600; margin-bottom: 0.75rem;">
-            Project: ${t.project}
-          </div>
+        return `
+          <div class="card card-interactive" data-team-id="${t.id}" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge ${isOpen ? 'badge-bordeaux' : 'badge-dark'}">${t.status || 'OPEN'}</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">Max Size: ${t.maxSize || 5}</span>
+            </div>
 
-          <p style="color: var(--stone-brown); font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5; flex: 1;">
-            ${t.description}
-          </p>
+            <h3 style="font-size: 1.25rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">
+              <a href="team-workspace.html?teamId=${t.id}" style="color: inherit;">${t.name}</a>
+            </h3>
 
-          <div style="background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem;">
-            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700; margin-bottom: 0.35rem;">Roles Needed:</div>
-            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-              ${t.neededRoles.map(r => `<span class="badge badge-stone" style="font-size: 0.75rem;">${r}</span>`).join('')}
+            <div style="font-size: 0.825rem; color: var(--stone-brown); margin-bottom: 0.75rem;">
+              Linked Project: <strong>${projectTitle}</strong>
+            </div>
+
+            <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+              ${t.description}
+            </p>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+              <button class="btn btn-sm btn-ghost" onclick="joinTeam('${t.id}', '${t.name}')">
+                🤝 Request to Join
+              </button>
+              <a href="team-workspace.html?teamId=${t.id}" class="btn btn-sm btn-primary">
+                Open Workspace &rarr;
+              </a>
             </div>
           </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: auto;">
-            <span style="font-size: 0.8rem; color: var(--stone-brown);">Lead: <strong>${t.lead}</strong></span>
-            <a href="team-workspace.html" class="btn btn-sm btn-primary">Workspace &rarr;</a>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
-    function filterTeams() {
-      const search = document.getElementById("team-search").value.toLowerCase();
-      const role = document.getElementById("team-role-filter").value.toLowerCase();
-
-      const filtered = teamsList.filter(t => {
-        const matchesSearch = t.name.toLowerCase().includes(search) || t.project.toLowerCase().includes(search);
-        const matchesRole = !role || t.neededRoles.some(r => r.toLowerCase().includes(role));
-        return matchesSearch && matchesRole;
-      });
-
-      renderTeams(filtered);
+    function openCreateTeamModal() {
+      if (!getAuthToken()) {
+        showToast("Please sign in to create a team.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+      document.getElementById("create-team-modal").classList.add("show");
     }
 
-    function handleCreateTeam(e) {
+    async function handleCreateTeam(e) {
       e.preventDefault();
-      const newTeam = {
-        id: "tm-" + Date.now(),
-        name: document.getElementById("tm-name").value,
-        project: document.getElementById("tm-project").value,
-        membersCount: 1,
-        neededRoles: document.getElementById("tm-roles").value.split(',').map(s=>s.trim()).filter(Boolean),
-        status: "Recruiting",
-        lead: MOCK_DATA.currentUser.name,
-        description: document.getElementById("tm-desc").value || "Newly created project team."
-      };
+      const name = document.getElementById("team-name").value.trim();
+      const description = document.getElementById("team-desc").value.trim();
+      const maxSize = parseInt(document.getElementById("team-max-size").value) || 5;
+      const submitBtn = document.getElementById("team-submit-btn");
 
-      teamsList.unshift(newTeam);
-      setStoredData("teams", teamsList);
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Creating...";
 
-      renderTeams(teamsList);
-      document.getElementById("create-team-modal").classList.remove("show");
-      showToast("Project team created!", "success");
+      try {
+        await apiPost("/api/teams", { name, description, maxSize });
+        document.getElementById("create-team-modal").classList.remove("show");
+        showToast(`Team '${name}' created successfully!`, "success");
+        loadTeams();
+      } catch (err) {
+        showToast(err.message || "Failed to create team", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Create Team";
+      }
+    }
+
+    async function joinTeam(id, name) {
+      if (!getAuthToken()) {
+        showToast("Please sign in to join teams.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+
+      try {
+        await apiPost(`/api/teams/${id}/join`, {});
+        showToast(`Joined team '${name}'!`, "success");
+      } catch (err) {
+        showToast(err.message || "Could not join team", "info");
+      }
     }
   </script>
 </body>

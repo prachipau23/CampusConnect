@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Sign In – CampusConnect</title>
+  <title>Sign In – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
     .auth-wrapper {
@@ -23,7 +23,7 @@
       <div class="card">
         <div style="text-align: center; margin-bottom: 2rem;">
           <h1 style="font-size: 1.8rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">Welcome Back</h1>
-          <p style="color: var(--stone-brown); font-size: 0.95rem;">Sign in to access your project teams & circles.</p>
+          <p style="color: var(--stone-brown); font-size: 0.95rem;">Sign in to access your projects, teams, and circles.</p>
         </div>
 
         <form id="login-form" onsubmit="handleLogin(event)">
@@ -31,16 +31,17 @@
           <div class="form-group">
             <label class="form-label">Role Category</label>
             <div style="display: flex; gap: 0.5rem; background-color: var(--white-smoke); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-              <button type="button" class="btn btn-sm btn-primary" style="flex: 1;" onclick="setRole(this, 'Student')">Student</button>
-              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'Faculty')">Faculty</button>
-              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'Mentor')">Mentor</button>
+              <button type="button" class="btn btn-sm btn-primary" style="flex: 1;" onclick="setRole(this, 'STUDENT')">Student</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'TEACHER')">Faculty</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="setRole(this, 'MENTOR')">Mentor</button>
             </div>
+            <input type="hidden" id="selected-role" value="STUDENT">
           </div>
 
           <!-- University Email -->
           <div class="form-group">
             <label class="form-label" for="login-email">University Email</label>
-            <input type="email" id="login-email" class="form-control" value="aarav.sharma@campus.edu" required>
+            <input type="email" id="login-email" class="form-control" placeholder="your.name@campus.edu" required>
           </div>
 
           <!-- Password -->
@@ -49,21 +50,24 @@
               <label class="form-label" for="login-password" style="margin-bottom: 0;">Password</label>
               <a href="forgot-password.html" style="font-size: 0.8rem; font-weight: 600;">Forgot Password?</a>
             </div>
-            <input type="password" id="login-password" class="form-control" value="••••••••" required>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
           </div>
 
           <!-- Remember me -->
           <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center;">
             <input type="checkbox" id="login-remember" checked>
-            <label for="login-remember" style="font-size: 0.875rem; color: var(--stone-brown);">Remember this device for 30 days</label>
+            <label for="login-remember" style="font-size: 0.875rem; color: var(--stone-brown);">Remember this session</label>
           </div>
 
+          <!-- Error container -->
+          <div id="login-error" style="display: none; color: #dc2626; background: #fee2e2; padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem;"></div>
+
           <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
+          <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign In</button>
         </form>
 
         <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--stone-brown);">
-          Don't have an account? <a href="register.html" style="font-weight: 600;">Register as Student</a>
+          Don't have an account? <a href="register.html" style="font-weight: 600;">Register here</a>
         </div>
       </div>
     </div>
@@ -73,7 +77,7 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
     function setRole(btn, role) {
@@ -82,14 +86,56 @@
         b.className = 'btn btn-sm btn-ghost';
       });
       btn.className = 'btn btn-sm btn-primary';
+      document.getElementById('selected-role').value = role;
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
-      showToast("Sign in successful! Loading your student workspace...", "success");
-      setTimeout(() => {
-        window.location.href = "projects.html";
-      }, 1200);
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const errorDiv = document.getElementById("login-error");
+      const submitBtn = document.getElementById("login-submit-btn");
+
+      errorDiv.style.display = "none";
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Signing in...";
+
+      try {
+        const data = await apiPost("/api/auth/login", { email, password });
+        setAuthToken(data.token);
+
+        let userObj = {
+          id: data.userId,
+          email: data.email,
+          username: data.username,
+          role: data.role
+        };
+
+        // Attempt to fetch full profile
+        try {
+          const profile = await apiGet("/api/profiles/me");
+          userObj.fullName = profile.fullName;
+          userObj.avatarInitials = profile.avatarInitials;
+          userObj.department = profile.department;
+          userObj.yearOfStudy = profile.yearOfStudy;
+        } catch (ignored) {}
+
+        setStoredUser(userObj);
+        showToast(`Welcome back, ${userObj.fullName || userObj.username}!`, "success");
+
+        setTimeout(() => {
+          if (data.role === "TEACHER" || data.role === "ADMIN" || data.role === "MENTOR") {
+            window.location.href = "directory.html";
+          } else {
+            window.location.href = "profile.html";
+          }
+        }, 500);
+      } catch (err) {
+        errorDiv.innerText = err.message || "Invalid email or password. Please try again.";
+        errorDiv.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Sign In";
+      }
     }
   </script>
 </body>

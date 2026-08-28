@@ -45,6 +45,53 @@ public class HackathonService {
         return hackathonRepository.save(h);
     }
 
+    private final com.campusconnect.repository.TeamRepository teamRepository;
+    private final com.campusconnect.repository.TeamMemberRepository teamMemberRepository;
+    private final com.campusconnect.repository.UserRepository userRepository;
+    private final NotificationService notificationService;
+
+    @Transactional
+    public com.campusconnect.entity.Team registerTeam(Long hackathonId, Map<String, Object> body, String userEmail) {
+        Hackathon h = getById(hackathonId);
+        com.campusconnect.entity.User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userEmail));
+
+        String teamName = (String) body.getOrDefault("teamName", "Team " + user.getUsername());
+        String track = (String) body.getOrDefault("track", "General Track");
+        Object membersObj = body.get("members");
+        String membersInfo = membersObj != null ? membersObj.toString() : "";
+
+        String desc = "Hackathon Team for " + h.getName() + " | Track: " + track;
+        if (!membersInfo.isBlank()) {
+            desc += " | Teammates: " + membersInfo;
+        }
+
+        com.campusconnect.entity.Team team = com.campusconnect.entity.Team.builder()
+                .name(teamName)
+                .description(desc)
+                .maxSize(5)
+                .status(com.campusconnect.entity.Team.TeamStatus.OPEN)
+                .build();
+        team = teamRepository.save(team);
+
+        com.campusconnect.entity.TeamMember leader = com.campusconnect.entity.TeamMember.builder()
+                .team(team)
+                .user(user)
+                .role(com.campusconnect.entity.TeamMember.MemberRole.LEAD)
+                .build();
+        teamMemberRepository.save(leader);
+
+        // Notify the registering student
+        notificationService.createNotification(
+                user,
+                "Successfully registered team '" + teamName + "' for " + h.getName() + "!",
+                com.campusconnect.entity.Notification.EntityType.HACKATHON,
+                h.getId()
+        );
+
+        return team;
+    }
+
     @Transactional
     public void delete(Long id) {
         hackathonRepository.deleteById(id);

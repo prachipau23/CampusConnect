@@ -35,6 +35,6 @@ public class User {
     private LocalDateTime createdAt;
 
     public enum Role {
-        STUDENT, ADMIN, TEACHER
+        STUDENT, ADMIN, TEACHER, MENTOR
     }
 }

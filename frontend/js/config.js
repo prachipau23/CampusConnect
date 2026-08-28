@@ -1,32 +1,45 @@
 /**
- * CampusConnect Frontend Configuration
+ * CampusConnect Frontend Configuration & API Wrapper
  *
- * This is the ONLY file you need to edit to point the frontend
- * at a different backend URL.
- *
- * When the Render backend is deployed, this value is updated
- * automatically to the live Render service URL.
+ * Points directly at the live Spring Boot backend.
  */
 
 const API_BASE_URL = 'https://campusconnect-backend-m7y6.onrender.com';
 
-// Helper: Get stored auth token
+// Stored auth token (JWT)
 function getAuthToken() {
   return localStorage.getItem('campusconnect_jwt');
 }
 
-// Helper: Set auth token after login
 function setAuthToken(token) {
   localStorage.setItem('campusconnect_jwt', token);
 }
 
-// Helper: Clear auth on logout
+// Stored current user info
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem('campusconnect_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setStoredUser(user) {
+  try {
+    localStorage.setItem('campusconnect_user', JSON.stringify(user));
+  } catch (e) {
+    console.error('Error saving user to storage', e);
+  }
+}
+
+// Clear all auth on logout
 function clearAuth() {
   localStorage.removeItem('campusconnect_jwt');
   localStorage.removeItem('campusconnect_user');
 }
 
-// Helper: Build authenticated fetch options
+// Build headers with optional Bearer auth
 function authHeaders(extraHeaders = {}) {
   const token = getAuthToken();
   return {
@@ -36,16 +49,45 @@ function authHeaders(extraHeaders = {}) {
   };
 }
 
-// Helper: Unified API call wrapper
+// Unified API caller
 async function apiCall(path, options = {}) {
-  const url = `${API_BASE_URL}${path}`;
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
   const response = await fetch(url, {
     ...options,
-    headers: authHeaders(options.headers || {})
+    headers: options.isFormData ? (getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}) : authHeaders(options.headers || {})
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(err.error || `API error ${response.status}`);
+    throw new Error(err.error || err.message || `API error ${response.status}`);
   }
   return response.json();
+}
+
+async function apiGet(path) {
+  return apiCall(path, { method: 'GET' });
+}
+
+async function apiPost(path, data) {
+  return apiCall(path, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+async function apiPut(path, data) {
+  return apiCall(path, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+}
+
+async function apiDelete(path) {
+  return apiCall(path, { method: 'DELETE' });
+}
+
+async function apiPatch(path, data = null) {
+  return apiCall(path, {
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined
+  });
 }

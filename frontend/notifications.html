@@ -17,9 +17,9 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Notifications Center</h1>
-        <p class="page-subtitle">Stay updated with team requests, circle discussions, hackathon deadlines, and project messages.</p>
+        <p class="page-subtitle">Stay updated with team invitations, hackathons, circle discussions, and project messages.</p>
       </div>
-      <button class="btn btn-outline" onclick="markAllRead()">
+      <button class="btn btn-outline" onclick="handleMarkAllRead()">
         ✓ Mark All as Read
       </button>
     </div>
@@ -27,7 +27,7 @@
     <!-- Notifications Stream Card -->
     <div class="card">
       <div id="notif-full-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <!-- Populated via JS -->
+        <div style="text-align: center; padding: 2rem; color: var(--stone-brown);">Loading notifications...</div>
       </div>
     </div>
 
@@ -37,55 +37,69 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let notifs = getStoredData("notifications", MOCK_DATA.notifications);
+    let notifsList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderFullNotifs();
+      loadNotifications();
     });
 
-    function renderFullNotifs() {
+    async function loadNotifications() {
       const container = document.getElementById("notif-full-list");
-      if (!container) return;
-
-      if (notifs.length === 0) {
-        container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--stone-brown);">No notifications found</div>`;
+      if (!getAuthToken()) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 2rem; color: var(--stone-brown);">
+            <p style="margin-bottom: 1rem;">Please sign in to view your notifications.</p>
+            <a href="login.html" class="btn btn-primary btn-sm">Sign In</a>
+          </div>
+        `;
         return;
       }
 
-      container.innerHTML = notifs.map(n => `
-        <div class="notification-item ${n.unread ? 'unread' : ''}" style="border: 1px solid var(--border-color); border-radius: var(--radius-md);" onclick="toggleRead('${n.id}')">
-          <div class="notification-icon">${n.icon}</div>
+      try {
+        notifsList = await apiGet("/api/notifications");
+        renderFullNotifs(notifsList);
+      } catch (err) {
+        container.innerHTML = `<div style="text-align: center; padding: 2rem; color: #dc2626;">Error loading notifications: ${err.message}</div>`;
+      }
+    }
+
+    function renderFullNotifs(list) {
+      const container = document.getElementById("notif-full-list");
+      if (!container) return;
+
+      if (!list || list.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 3rem; color: var(--stone-brown);">No notifications found. You're all caught up!</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(n => `
+        <div class="notification-item ${!n.read ? 'unread' : ''}" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: background-color 0.15s ease;" onclick="handleNotificationClick('${n.id}', '${n.targetEntityType || ''}', '${n.targetEntityId || ''}')">
+          <div class="notification-icon">🔔</div>
           <div class="notification-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-              <strong style="font-size: 0.95rem; color: var(--black);">${n.title}</strong>
-              <span class="notification-time">${n.time}</span>
+              <strong style="font-size: 0.95rem; color: var(--black);">${n.targetEntityType ? n.targetEntityType + ' Update' : 'CampusConnect Alert'}</strong>
+              <span class="notification-time">${formatTimeAgo(n.createdAt)}</span>
             </div>
             <div class="notification-text" style="color: var(--stone-brown);">${n.message}</div>
           </div>
-          ${n.unread ? `<span class="badge badge-bordeaux" style="align-self: center; font-size: 0.7rem;">New</span>` : ''}
+          ${!n.read ? `<span class="badge badge-bordeaux" style="align-self: center; font-size: 0.7rem;">New</span>` : ''}
         </div>
       `).join('');
     }
 
-    function toggleRead(id) {
-      const target = notifs.find(n => n.id === id);
-      if (target) {
-        target.unread = !target.unread;
-        setStoredData("notifications", notifs);
-        renderFullNotifs();
-        renderNavbar(); // Refresh nav unread badge
+    async function handleMarkAllRead() {
+      try {
+        await apiPost("/api/notifications/mark-all-read", {});
+        notifsList.forEach(n => n.read = true);
+        renderFullNotifs(notifsList);
+        renderNavbar();
+        showToast("All notifications marked as read", "info");
+      } catch (err) {
+        showToast("Failed to mark all as read", "error");
       }
-    }
-
-    function markAllRead() {
-      notifs.forEach(n => n.unread = false);
-      setStoredData("notifications", notifs);
-      renderFullNotifs();
-      renderNavbar();
-      showToast("All notifications marked as read", "info");
     }
   </script>
 </body>

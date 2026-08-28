@@ -17,9 +17,9 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Student Project Showcase</h1>
-        <p class="page-subtitle">Discover innovation projects created by students or showcase your own work.</p>
+        <p class="page-subtitle">Discover innovation projects created by campus students or showcase your own work.</p>
       </div>
-      <button class="btn btn-primary" data-modal-target="add-project-modal">
+      <button class="btn btn-primary" onclick="openAddProjectModal()">
         ➕ Publish New Project
       </button>
     </div>
@@ -30,33 +30,24 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="project-search" class="form-control" placeholder="Search by project name or keyword..." oninput="filterProjects()">
+        <input type="text" id="project-search" class="form-control" placeholder="Search by project name, tech stack, or author..." oninput="filterProjects()">
       </div>
 
       <div style="min-width: 180px;">
-        <select id="domain-filter" class="form-select" onchange="filterProjects()">
-          <option value="">All Domains</option>
-          <option value="Web & Mobile">Web & Mobile</option>
-          <option value="IoT & Hardware">IoT & Hardware</option>
-          <option value="Artificial Intelligence">Artificial Intelligence</option>
-          <option value="Developer Tools">Developer Tools</option>
-        </select>
-      </div>
-
-      <div style="min-width: 160px;">
         <select id="status-filter" class="form-select" onchange="filterProjects()">
           <option value="">All Statuses</option>
-          <option value="In Development">In Development</option>
-          <option value="Beta Testing">Beta Testing</option>
-          <option value="Active">Active</option>
-          <option value="Concept">Concept</option>
+          <option value="ACTIVE">Active / In Development</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="ARCHIVED">Archived</option>
         </select>
       </div>
     </div>
 
     <!-- Projects Showcase Grid -->
     <div class="grid grid-cols-2" id="projects-grid">
-      <!-- Dynamically populated via JS -->
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading live projects...
+      </div>
     </div>
 
   </main>
@@ -75,54 +66,32 @@
             <input type="text" id="prj-title" class="form-control" placeholder="e.g. CampusConnect Platform" required>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label" for="prj-category">Category / Domain *</label>
-              <select id="prj-category" class="form-select" required>
-                <option value="Web & Mobile">Web & Mobile</option>
-                <option value="IoT & Hardware">IoT & Hardware</option>
-                <option value="Artificial Intelligence">Artificial Intelligence</option>
-                <option value="Developer Tools">Developer Tools</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="prj-status">Current Status</label>
-              <select id="prj-status" class="form-select">
-                <option value="In Development">In Development</option>
-                <option value="Concept">Concept</option>
-                <option value="Beta Testing">Beta Testing</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label class="form-label" for="prj-status">Project Status</label>
+            <select id="prj-status" class="form-select">
+              <option value="ACTIVE">Active / In Development</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="prj-desc">Short Summary *</label>
-            <input type="text" id="prj-desc" class="form-control" placeholder="Brief 1-2 sentence overview" required>
+            <label class="form-label" for="prj-desc">Project Description *</label>
+            <textarea id="prj-desc" class="form-control" rows="3" placeholder="Explain the problem solved and core features..." required></textarea>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="prj-detail-desc">Detailed Problem Statement & Solution</label>
-            <textarea id="prj-detail-desc" class="form-control" placeholder="Describe the problem, target users, and architectural design..."></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="prj-stack">Tech Stack (comma separated)</label>
-            <input type="text" id="prj-stack" class="form-control" placeholder="e.g. Java, Spring Boot, React, PostgreSQL">
+            <label class="form-label" for="prj-stack">Technologies Used (comma separated) *</label>
+            <input type="text" id="prj-stack" class="form-control" placeholder="e.g. Java, Spring Boot, React, PostgreSQL, Docker" required>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="prj-repo">GitHub Repository URL</label>
-            <input type="url" id="prj-repo" class="form-control" placeholder="https://github.com/org/repo">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="prj-roles">Open Roles Needed (comma separated)</label>
-            <input type="text" id="prj-roles" class="form-control" placeholder="e.g. Mobile App Dev, UI/UX Designer">
+            <input type="url" id="prj-repo" class="form-control" placeholder="https://github.com/username/project">
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Publish Project</button>
+          <button type="submit" id="prj-submit-btn" class="btn btn-primary">Publish Project</button>
         </div>
       </form>
     </div>
@@ -132,108 +101,128 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let currentProjects = getStoredData("projects", MOCK_DATA.projects);
+    let projectsList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderProjects(currentProjects);
+      loadProjects();
     });
 
-    function renderProjects(projects) {
+    async function loadProjects() {
+      try {
+        projectsList = await apiGet("/api/projects");
+        renderProjects(projectsList);
+      } catch (err) {
+        document.getElementById("projects-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading projects</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderProjects(list) {
       const grid = document.getElementById("projects-grid");
       if (!grid) return;
 
-      if (projects.length === 0) {
+      if (!list || list.length === 0) {
         grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
-          <h3>No projects matched your criteria</h3>
-          <p style="color: var(--stone-brown);">Try adjusting your search terms or domain filter.</p>
+          <h3>No projects found</h3>
+          <p style="color: var(--stone-brown);">Be the first student to publish a project!</p>
         </div>`;
         return;
       }
 
-      grid.innerHTML = projects.map(p => `
-        <div class="card card-interactive" data-project-id="${p.id}">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-            <span class="badge badge-bordeaux">${p.category}</span>
-            <div style="display: flex; gap: 0.75rem; font-size: 0.825rem; font-weight: 600; color: var(--stone-brown);">
-              <span>★ ${p.stars}</span>
-              <span>👁️ ${p.views}</span>
+      grid.innerHTML = list.map(p => {
+        const stackArr = p.techStack ? p.techStack.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const author = p.owner ? (p.owner.username || 'Student') : 'Campus Engineer';
+
+        return `
+          <div class="card card-interactive" data-project-id="${p.id}" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge ${p.status === 'COMPLETED' ? 'badge-dark' : 'badge-bordeaux'}">${p.status || 'ACTIVE'}</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">${formatTimeAgo(p.createdAt)}</span>
+            </div>
+
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">
+              <a href="project-detail.html?id=${p.id}" style="color: var(--night-bordeaux);">${p.title}</a>
+            </h3>
+
+            <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+              ${p.description}
+            </p>
+
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+              ${stackArr.map(t => `<span class="badge badge-taupe">${t}</span>`).join('')}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+              <span style="font-size: 0.825rem; color: var(--stone-brown);">Lead: <strong>${author}</strong></span>
+              <a href="project-detail.html?id=${p.id}" class="btn btn-sm btn-outline">View Details &rarr;</a>
             </div>
           </div>
-
-          <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">
-            <a href="project-detail.html?id=${p.id}">${p.title}</a>
-          </h3>
-
-          <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">
-            ${p.description}
-          </p>
-
-          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-            ${p.techStack.map(t => `<span class="badge badge-taupe">${t}</span>`).join('')}
-          </div>
-
-          ${p.openRolesNeeded && p.openRolesNeeded.length > 0 ? `
-            <div style="background-color: var(--night-bordeaux-light); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem; color: var(--night-bordeaux); font-weight: 600;">
-              🔍 Recruitment: ${p.openRolesNeeded.join(', ')}
-            </div>
-          ` : ''}
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <div class="user-avatar" style="width: 26px; height: 26px; font-size: 0.7rem;">${p.author ? p.author.split(' ').map(n=>n[0]).join('') : 'ST'}</div>
-              <span style="font-size: 0.825rem; color: var(--stone-brown);">${p.author}</span>
-            </div>
-            <a href="project-detail.html?id=${p.id}" class="btn btn-sm btn-primary">View Details &rarr;</a>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterProjects() {
       const search = document.getElementById("project-search").value.toLowerCase();
-      const domain = document.getElementById("domain-filter").value;
       const status = document.getElementById("status-filter").value;
 
-      const filtered = currentProjects.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(search) || p.description.toLowerCase().includes(search) || p.techStack.some(t => t.toLowerCase().includes(search));
-        const matchesDomain = !domain || p.category === domain;
-        const matchesStatus = !status || p.status === status;
-        return matchesSearch && matchesDomain && matchesStatus;
+      const filtered = projectsList.filter(p => {
+        const matchesSearch = (p.title && p.title.toLowerCase().includes(search)) ||
+                              (p.description && p.description.toLowerCase().includes(search)) ||
+                              (p.techStack && p.techStack.toLowerCase().includes(search)) ||
+                              (p.owner && p.owner.username.toLowerCase().includes(search));
+        const matchesStatus = !status || (p.status && p.status.toUpperCase() === status.toUpperCase());
+        return matchesSearch && matchesStatus;
       });
 
       renderProjects(filtered);
     }
 
-    function handleAddProject(e) {
+    function openAddProjectModal() {
+      if (!getAuthToken()) {
+        showToast("Please sign in to publish a project.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+      document.getElementById("add-project-modal").classList.add("show");
+    }
+
+    async function handleAddProject(e) {
       e.preventDefault();
-      const newPrj = {
-        id: "prj-" + Date.now(),
-        title: document.getElementById("prj-title").value,
-        category: document.getElementById("prj-category").value,
-        status: document.getElementById("prj-status").value,
-        description: document.getElementById("prj-desc").value,
-        detailedDescription: document.getElementById("prj-detail-desc").value || document.getElementById("prj-desc").value,
-        stars: 1,
-        views: 12,
-        techStack: document.getElementById("prj-stack").value.split(',').map(s=>s.trim()).filter(Boolean),
-        author: MOCK_DATA.currentUser.name,
-        authorDept: MOCK_DATA.currentUser.department,
-        teamMembers: [{ name: MOCK_DATA.currentUser.name, role: "Project Owner", avatar: MOCK_DATA.currentUser.avatar }],
-        openRolesNeeded: document.getElementById("prj-roles").value.split(',').map(s=>s.trim()).filter(Boolean),
-        repoUrl: document.getElementById("prj-repo").value || "#",
-        createdDate: new Date().toISOString().split('T')[0]
-      };
+      const title = document.getElementById("prj-title").value.trim();
+      const status = document.getElementById("prj-status").value;
+      const description = document.getElementById("prj-desc").value.trim();
+      const techStack = document.getElementById("prj-stack").value.trim();
+      const githubUrl = document.getElementById("prj-repo").value.trim();
+      const submitBtn = document.getElementById("prj-submit-btn");
 
-      currentProjects.unshift(newPrj);
-      setStoredData("projects", currentProjects);
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Publishing...";
 
-      renderProjects(currentProjects);
-      document.getElementById("add-project-modal").classList.remove("show");
-      document.getElementById("add-project-form").reset();
-      showToast("Project published successfully to showcase!", "success");
+      try {
+        await apiPost("/api/projects", {
+          title,
+          status,
+          description,
+          techStack,
+          githubUrl
+        });
+
+        document.getElementById("add-project-modal").classList.remove("show");
+        showToast("Project published successfully!", "success");
+        loadProjects();
+      } catch (err) {
+        showToast(err.message || "Failed to publish project", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Publish Project";
+      }
     }
   </script>
 </body>

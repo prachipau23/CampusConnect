@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Registration – CampusConnect</title>
+  <title>Account Registration – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
     .auth-wrapper {
-      max-width: 520px;
+      max-width: 540px;
       margin: 2rem auto;
     }
   </style>
@@ -23,61 +23,85 @@
       <div class="card">
         <div style="text-align: center; margin-bottom: 2rem;">
           <h1 style="font-size: 1.8rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">Join CampusConnect</h1>
-          <p style="color: var(--stone-brown); font-size: 0.95rem;">Create your student account to start collaborating with peers.</p>
+          <p style="color: var(--stone-brown); font-size: 0.95rem;">Create your account to start collaborating with students and faculty.</p>
         </div>
 
         <form id="register-form" onsubmit="handleRegister(event)">
+          <!-- Role Selection (Issue 7) -->
+          <div class="form-group">
+            <label class="form-label">I am registering as *</label>
+            <div style="display: flex; gap: 0.5rem; background-color: var(--white-smoke); padding: 0.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <button type="button" class="btn btn-sm btn-primary" style="flex: 1;" onclick="selectRegRole(this, 'STUDENT')">Student</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="selectRegRole(this, 'TEACHER')">Faculty / Teacher</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="flex: 1;" onclick="selectRegRole(this, 'MENTOR')">Mentor</button>
+            </div>
+            <input type="hidden" id="reg-role" value="STUDENT">
+          </div>
+
           <!-- Full Name -->
           <div class="form-group">
             <label class="form-label" for="reg-name">Full Name *</label>
-            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Aarav Sharma" required>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Dr. Priya Nair or Aarav Sharma" required>
+          </div>
+
+          <!-- Username -->
+          <div class="form-group">
+            <label class="form-label" for="reg-username">Username *</label>
+            <input type="text" id="reg-username" class="form-control" placeholder="e.g. priya.nair or aarav.s" required>
           </div>
 
           <!-- University Email -->
           <div class="form-group">
             <label class="form-label" for="reg-email">University Email *</label>
-            <input type="email" id="reg-email" class="form-control" placeholder="student.name@campus.edu" required>
-            <span style="font-size: 0.775rem; color: var(--stone-brown);">Must be a valid .edu or university domain address</span>
+            <input type="email" id="reg-email" class="form-control" placeholder="name@campus.edu" required>
+            <span style="font-size: 0.775rem; color: var(--stone-brown);">Must be a valid email address</span>
           </div>
 
           <!-- Department & Year Grid -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label" for="reg-dept">Department *</label>
+              <label class="form-label" for="reg-dept">Department / Domain *</label>
               <select id="reg-dept" class="form-select" required>
-                <option value="">Select Dept</option>
-                <option value="Computer Science">Computer Science</option>
+                <option value="">Select Department</option>
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
                 <option value="Information Technology">Information Technology</option>
                 <option value="AI & Data Science">AI & Data Science</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
                 <option value="Mechanical Engineering">Mechanical Engineering</option>
                 <option value="Design & Architecture">Design & Architecture</option>
+                <option value="Management & Business">Management & Business</option>
               </select>
             </div>
 
-            <div class="form-group">
+            <!-- Issue 4: Graduation Year as plain 4-digit number input for students -->
+            <div class="form-group" id="grad-year-container">
               <label class="form-label" for="reg-year">Graduation Year *</label>
-              <select id="reg-year" class="form-select" required>
-                <option value="">Select Year</option>
-                <option value="1st Year">1st Year (2029)</option>
-                <option value="2nd Year">2nd Year (2028)</option>
-                <option value="3rd Year">3rd Year (2027)</option>
-                <option value="4th Year">4th Year (2026)</option>
-                <option value="Graduate">Postgraduate</option>
-              </select>
+              <input type="number" id="reg-year" class="form-control" placeholder="e.g. 2027" min="1990" max="2040">
+            </div>
+
+            <!-- Designation field for Faculty/Mentor (Issue 7) -->
+            <div class="form-group" id="designation-container" style="display: none;">
+              <label class="form-label" for="reg-designation">Designation / Title</label>
+              <input type="text" id="reg-designation" class="form-control" placeholder="e.g. Assistant Professor, Lead AI Mentor">
             </div>
           </div>
 
-          <!-- Primary Technical Skills -->
+          <!-- Primary Technical Skills / Areas of Expertise -->
           <div class="form-group">
-            <label class="form-label" for="reg-skills">Primary Skills (comma separated)</label>
-            <input type="text" id="reg-skills" class="form-control" placeholder="e.g. React, Java Spring Boot, Figma, Python">
+            <label class="form-label" for="reg-skills" id="skills-label">Primary Skills / Focus Areas (comma separated)</label>
+            <input type="text" id="reg-skills" class="form-control" placeholder="e.g. Machine Learning, Cloud Architecture, Java">
+          </div>
+
+          <!-- Bio / Summary -->
+          <div class="form-group">
+            <label class="form-label" for="reg-bio">Short Bio</label>
+            <textarea id="reg-bio" class="form-control" rows="2" placeholder="Tell us briefly about your interests or background..."></textarea>
           </div>
 
           <!-- Password -->
           <div class="form-group">
             <label class="form-label" for="reg-password">Password *</label>
-            <input type="password" id="reg-password" class="form-control" placeholder="At least 8 characters" required minlength="8">
+            <input type="password" id="reg-password" class="form-control" placeholder="At least 6 characters" required minlength="6">
           </div>
 
           <!-- Confirm Password -->
@@ -86,16 +110,19 @@
             <input type="password" id="reg-confirm-password" class="form-control" placeholder="Re-enter password" required>
           </div>
 
+          <!-- Error container -->
+          <div id="reg-error" style="display: none; color: #dc2626; background: #fee2e2; padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem;"></div>
+
           <!-- Terms Checkbox -->
           <div class="form-group" style="display: flex; gap: 0.5rem; align-items: flex-start; margin-top: 1rem;">
             <input type="checkbox" id="reg-terms" required style="margin-top: 0.25rem;">
             <label for="reg-terms" style="font-size: 0.85rem; color: var(--stone-brown);">
-              I agree to the <a href="#">Community Guidelines</a> and <a href="#">Terms of Service</a> for student collaboration on CampusConnect.
+              I agree to the CampusConnect Community Guidelines and Academic Integrity standards.
             </label>
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Complete Registration</button>
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Account</button>
         </form>
 
         <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--stone-brown);">
@@ -109,23 +136,106 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    function handleRegister(e) {
+    function selectRegRole(btn, role) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('button').forEach(b => {
+        b.className = 'btn btn-sm btn-ghost';
+      });
+      btn.className = 'btn btn-sm btn-primary';
+      document.getElementById('reg-role').value = role;
+
+      const gradYearBox = document.getElementById('grad-year-container');
+      const desigBox = document.getElementById('designation-container');
+      const gradYearInput = document.getElementById('reg-year');
+      const skillsLabel = document.getElementById('skills-label');
+
+      if (role === 'STUDENT') {
+        gradYearBox.style.display = 'block';
+        desigBox.style.display = 'none';
+        gradYearInput.required = true;
+        skillsLabel.innerText = 'Primary Skills (comma separated)';
+      } else {
+        gradYearBox.style.display = 'none';
+        desigBox.style.display = 'block';
+        gradYearInput.required = false;
+        skillsLabel.innerText = 'Areas of Expertise & Mentorship (comma separated)';
+      }
+    }
+
+    async function handleRegister(e) {
       e.preventDefault();
       const pwd = document.getElementById("reg-password").value;
       const confirmPwd = document.getElementById("reg-confirm-password").value;
+      const errorDiv = document.getElementById("reg-error");
+      const submitBtn = document.getElementById("reg-submit-btn");
+
+      errorDiv.style.display = "none";
 
       if (pwd !== confirmPwd) {
-        alert("Passwords do not match. Please verify and re-enter.");
+        errorDiv.innerText = "Passwords do not match. Please verify and re-enter.";
+        errorDiv.style.display = "block";
         return;
       }
 
-      showToast("Account created successfully! Redirecting to profile...", "success");
-      setTimeout(() => {
-        window.location.href = "profile.html";
-      }, 1500);
+      const role = document.getElementById("reg-role").value;
+      const fullName = document.getElementById("reg-name").value.trim();
+      const username = document.getElementById("reg-username").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const department = document.getElementById("reg-dept").value;
+      const yearOfStudy = role === 'STUDENT' ? (document.getElementById("reg-year").value ? `Class of ${document.getElementById("reg-year").value}` : "") : document.getElementById("reg-designation").value.trim();
+      const skills = document.getElementById("reg-skills").value.trim();
+      const bio = document.getElementById("reg-bio").value.trim();
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Creating account...";
+
+      try {
+        await apiPost("/api/auth/register", {
+          username,
+          email,
+          password: pwd,
+          fullName,
+          role,
+          department,
+          yearOfStudy,
+          skills,
+          bio
+        });
+
+        // Automatically log the newly registered user in!
+        const loginRes = await apiPost("/api/auth/login", { email, password: pwd });
+        setAuthToken(loginRes.token);
+
+        const userObj = {
+          id: loginRes.userId,
+          email: loginRes.email,
+          username: loginRes.username,
+          role: loginRes.role,
+          fullName: fullName,
+          avatarInitials: fullName.length >= 2 ? fullName.substring(0, 2).toUpperCase() : username.substring(0, 2).toUpperCase(),
+          department: department,
+          yearOfStudy: yearOfStudy
+        };
+        setStoredUser(userObj);
+
+        showToast("Account created successfully! Welcome to CampusConnect.", "success");
+
+        setTimeout(() => {
+          if (role === 'TEACHER' || role === 'ADMIN' || role === 'MENTOR') {
+            window.location.href = "directory.html";
+          } else {
+            window.location.href = "profile.html";
+          }
+        }, 600);
+      } catch (err) {
+        errorDiv.innerText = err.message || "Registration failed. Please check your inputs.";
+        errorDiv.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Create Account";
+      }
     }
   </script>
 </body>

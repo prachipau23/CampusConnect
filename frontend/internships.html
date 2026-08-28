@@ -16,8 +16,8 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Campus & Partner Internships</h1>
-        <p class="page-subtitle">Discover research assistantships, campus tech lab roles, and industry partner apprenticeships.</p>
+        <h1 class="page-title">Internship & Research Opportunities</h1>
+        <p class="page-subtitle">Apply for campus research roles, industry tech internships, and part-time developer fellowships.</p>
       </div>
     </div>
 
@@ -27,132 +27,118 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="int-search" class="form-control" placeholder="Search role title, company..." oninput="filterInternships()">
+        <input type="text" id="intern-search" class="form-control" placeholder="Search by role title, company, or keywords..." oninput="filterInternships()">
       </div>
 
       <div style="min-width: 180px;">
-        <select id="int-type-filter" class="form-select" onchange="filterInternships()">
-          <option value="">All Types</option>
-          <option value="Research">Research & Development</option>
-          <option value="Industry">Industry Partner</option>
-          <option value="Academic">Academic Research</option>
+        <select id="intern-mode-filter" class="form-select" onchange="filterInternships()">
+          <option value="">All Work Modes</option>
+          <option value="Remote">Remote</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="On-Site">On-Site / Campus Lab</option>
         </select>
       </div>
     </div>
 
-    <!-- Internship Cards Grid -->
-    <div class="grid grid-cols-3" id="internships-grid">
-      <!-- Populated via JS -->
+    <!-- Internships Grid -->
+    <div class="grid grid-cols-2" id="internships-grid">
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading internship postings...
+      </div>
     </div>
 
   </main>
-
-  <!-- Apply Internship Modal -->
-  <div class="modal-backdrop" id="apply-intern-modal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 class="modal-title">Apply for Opportunity</h3>
-        <button class="modal-close" data-modal-close>&times;</button>
-      </div>
-      <form onsubmit="handleApplySubmit(event)">
-        <div class="modal-body">
-          <p style="margin-bottom: 1rem; color: var(--stone-brown); font-size: 0.9rem;">
-            Applying for: <strong id="apply-int-title" style="color: var(--black);">Full-Stack Software Engineering Intern</strong>
-          </p>
-
-          <div class="form-group">
-            <label class="form-label">Cover Note / Statement of Interest *</label>
-            <textarea class="form-control" rows="3" placeholder="Briefly describe why you are interested in this position and your relevant coursework/projects..." required></textarea>
-          </div>
-
-          <div style="background-color: var(--white-smoke); padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--stone-brown);">
-            📄 Your current uploaded resume (<strong>Aarav_Sharma_Resume_2026.pdf</strong>) will be attached automatically.
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Submit Application</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Footer -->
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let internshipsList = MOCK_DATA.internships;
+    let internshipsList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderInternships(internshipsList);
+      loadInternships();
     });
+
+    async function loadInternships() {
+      try {
+        internshipsList = await apiGet("/api/internships");
+        renderInternships(internshipsList);
+      } catch (err) {
+        document.getElementById("internships-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading internships</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
 
     function renderInternships(list) {
       const grid = document.getElementById("internships-grid");
       if (!grid) return;
 
-      if (list.length === 0) {
-        grid.innerHTML = `<div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
-          <h3>No internship listings found</h3>
-          <p style="color: var(--stone-brown);">Try adjusting your search criteria.</p>
+      if (!list || list.length === 0) {
+        grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+          <h3>No internships found</h3>
+          <p style="color: var(--stone-brown);">Check back soon for new openings.</p>
         </div>`;
         return;
       }
 
-      grid.innerHTML = list.map(i => `
-        <div class="card card-interactive" data-internship-id="${i.id}" style="display: flex; flex-direction: column;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-            <span class="badge badge-bordeaux">${i.type}</span>
-            <span class="badge badge-taupe">${i.location}</span>
-          </div>
+      grid.innerHTML = list.map(i => {
+        const stipendFormatted = i.stipend ? `₹${Number(i.stipend).toLocaleString('en-IN')}/mo` : 'Competitive';
 
-          <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">${i.title}</h3>
-          <div style="font-size: 0.875rem; color: var(--night-bordeaux); font-weight: 700; margin-bottom: 1rem;">
-            🏢 ${i.company}
-          </div>
+        return `
+          <div class="card card-interactive" data-internship-id="${i.id}" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge badge-bordeaux">${i.mode || 'Remote'}</span>
+              <span style="font-weight: 700; color: var(--night-bordeaux); font-size: 1.05rem;">${stipendFormatted}</span>
+            </div>
 
-          <div style="background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; font-size: 0.825rem; display: flex; flex-direction: column; gap: 0.4rem;">
-            <div><strong>💰 Stipend:</strong> ${i.stipend}</div>
-            <div><strong>⏱️ Duration:</strong> ${i.duration}</div>
-            <div><strong>🎓 Eligibility:</strong> ${i.departmentReq}</div>
-            <div><strong>📅 Deadline:</strong> ${i.deadline}</div>
-          </div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.25rem; color: var(--black);">${i.title}</h3>
+            <div style="font-size: 0.9rem; font-weight: 600; color: var(--stone-brown); margin-bottom: 0.75rem;">
+              🏢 ${i.company} • 📍 ${i.location || 'Campus / Remote'}
+            </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
-            <span style="font-size: 0.775rem; color: var(--stone-brown);">Verified Listing</span>
-            <button class="btn btn-sm btn-primary" onclick="openApplyModal('${i.title}')">
-              Apply Now &rarr;
-            </button>
+            <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+              ${i.description}
+            </p>
+
+            <div style="font-size: 0.8rem; color: var(--stone-brown); margin-bottom: 1.25rem;">
+              ⏱️ Duration: <strong>${i.duration || '3-6 Months'}</strong> • 📅 Deadline: <strong>${i.deadline || 'Rolling'}</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+              <span style="font-size: 0.825rem; color: var(--stone-brown);">Verified Partner</span>
+              <a href="${i.applyUrl || '#'}" target="_blank" class="btn btn-sm btn-primary" onclick="handleApply('${i.title}')">
+                Apply Now &rarr;
+              </a>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterInternships() {
-      const search = document.getElementById("int-search").value.toLowerCase();
-      const type = document.getElementById("int-type-filter").value.toLowerCase();
+      const search = document.getElementById("intern-search").value.toLowerCase();
+      const mode = document.getElementById("intern-mode-filter").value;
 
       const filtered = internshipsList.filter(i => {
-        const matchesSearch = i.title.toLowerCase().includes(search) || i.company.toLowerCase().includes(search);
-        const matchesType = !type || i.type.toLowerCase().includes(type);
-        return matchesSearch && matchesType;
+        const matchesSearch = (i.title && i.title.toLowerCase().includes(search)) ||
+                              (i.company && i.company.toLowerCase().includes(search)) ||
+                              (i.description && i.description.toLowerCase().includes(search));
+        const matchesMode = !mode || (i.mode && i.mode.toLowerCase() === mode.toLowerCase());
+        return matchesSearch && matchesMode;
       });
 
       renderInternships(filtered);
     }
 
-    function openApplyModal(title) {
-      document.getElementById("apply-int-title").innerText = title;
-      document.getElementById("apply-intern-modal").classList.add("show");
-    }
-
-    function handleApplySubmit(e) {
-      e.preventDefault();
-      document.getElementById("apply-intern-modal").classList.remove("show");
-      showToast("Application submitted successfully!", "success");
+    function handleApply(title) {
+      showToast(`Redirecting to application for ${title}...`, "info");
     }
   </script>
 </body>

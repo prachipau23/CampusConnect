@@ -17,9 +17,9 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Campus Resource Hub</h1>
-        <p class="page-subtitle">Revision guides, past exam papers, starter templates, and design kits shared by students.</p>
+        <p class="page-subtitle">Revision guides, past exam papers, starter templates, and design kits shared by students & faculty.</p>
       </div>
-      <button class="btn btn-primary" data-modal-target="upload-resource-modal">
+      <button class="btn btn-primary" onclick="openUploadModal()">
         📤 Upload Shared Resource
       </button>
     </div>
@@ -30,23 +30,28 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="res-search" class="form-control" placeholder="Search resource title, subject..." oninput="filterResources()">
+        <input type="text" id="res-search" class="form-control" placeholder="Search resource title, subject, uploader..." oninput="filterResources()">
       </div>
 
       <div style="min-width: 200px;">
         <select id="res-cat-filter" class="form-select" onchange="filterResources()">
           <option value="">All Categories</option>
-          <option value="Cheatsheets & Guides">Cheatsheets & Guides</option>
-          <option value="Exam Papers">Exam Papers</option>
-          <option value="Design Kits">Design Kits</option>
-          <option value="Boilerplates">Boilerplates</option>
+          <option value="Guides">Guides & Notes</option>
+          <option value="CS Fundamentals">CS Fundamentals</option>
+          <option value="Interview Prep">Interview Prep</option>
+          <option value="AI/ML">AI / Machine Learning</option>
+          <option value="Databases">Databases</option>
+          <option value="DevOps">DevOps & Cloud</option>
+          <option value="Frontend">Frontend & Design</option>
         </select>
       </div>
     </div>
 
     <!-- Resource Cards Grid -->
     <div class="grid grid-cols-2" id="resources-grid">
-      <!-- Populated via JS -->
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading campus resources...
+      </div>
     </div>
 
   </main>
@@ -55,40 +60,49 @@
   <div class="modal-backdrop" id="upload-resource-modal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">Upload Shared Student Resource</h3>
+        <h3 class="modal-title">Upload Shared Resource</h3>
         <button class="modal-close" data-modal-close>&times;</button>
       </div>
       <form onsubmit="handleUploadResource(event)">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Resource Title *</label>
-            <input type="text" id="res-title-input" class="form-control" placeholder="e.g. Spring Boot REST API Architecture Guide" required>
+            <label class="form-label" for="res-title-input">Resource Title *</label>
+            <input type="text" id="res-title-input" class="form-control" placeholder="e.g. Spring Boot 3 & JPA Complete Guide" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Category *</label>
+            <label class="form-label" for="res-desc-input">Description</label>
+            <textarea id="res-desc-input" class="form-control" rows="2" placeholder="Brief summary of the contents..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="res-cat-select">Category *</label>
             <select id="res-cat-select" class="form-select" required>
-              <option value="Cheatsheets & Guides">Cheatsheets & Guides</option>
-              <option value="Exam Papers">Exam Papers</option>
-              <option value="Design Kits">Design Kits</option>
-              <option value="Boilerplates">Boilerplates</option>
+              <option value="Guides">Guides & Notes</option>
+              <option value="CS Fundamentals">CS Fundamentals</option>
+              <option value="Interview Prep">Interview Prep</option>
+              <option value="AI/ML">AI / Machine Learning</option>
+              <option value="Databases">Databases</option>
+              <option value="DevOps">DevOps & Cloud</option>
+              <option value="Frontend">Frontend & Design</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
           <!-- File Upload Dropzone -->
           <div class="form-group">
-            <label class="form-label">File Attachment *</label>
+            <label class="form-label">File Attachment (PDF, TXT, ZIP, Code) *</label>
             <div class="dropzone" onclick="document.getElementById('res-file-input').click()">
               <div class="dropzone-icon">📁</div>
-              <div style="font-weight: 700; font-size: 0.95rem; color: var(--black);" id="res-upload-status">Click to select PDF, ZIP, or Code archive</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--black);" id="res-upload-status">Click to select file</div>
               <div style="font-size: 0.8rem; color: var(--stone-brown);">Max file size: 25MB</div>
-              <input type="file" id="res-file-input" style="display: none;" onchange="handleResFileSelect(event)">
+              <input type="file" id="res-file-input" style="display: none;" onchange="handleResFileSelect(event)" required>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Upload Resource</button>
+          <button type="submit" id="res-submit-btn" class="btn btn-primary">Upload Resource</button>
         </div>
       </form>
     </div>
@@ -98,48 +112,73 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let resourcesList = getStoredData("resources", MOCK_DATA.resources);
+    let resourcesList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderResources(resourcesList);
+      loadResources();
     });
+
+    async function loadResources() {
+      try {
+        resourcesList = await apiGet("/api/resources");
+        renderResources(resourcesList);
+      } catch (err) {
+        document.getElementById("resources-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading resources</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
 
     function renderResources(list) {
       const grid = document.getElementById("resources-grid");
       if (!grid) return;
 
-      if (list.length === 0) {
+      if (!list || list.length === 0) {
         grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
           <h3>No resources found</h3>
-          <p style="color: var(--stone-brown);">Be the first to upload a resource for your peers!</p>
+          <p style="color: var(--stone-brown);">Be the first to upload a study resource for your peers!</p>
         </div>`;
         return;
       }
 
-      grid.innerHTML = list.map(r => `
-        <div class="card card-interactive" data-resource-id="${r.id}" style="display: flex; flex-direction: column;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-            <span class="badge badge-bordeaux">${r.category}</span>
-            <span class="badge badge-taupe">${r.format} (${r.size})</span>
-          </div>
+      grid.innerHTML = list.map(r => {
+        const uploaderName = r.uploadedBy ? (r.uploadedBy.username || 'Peer') : 'Faculty';
+        const sizeKb = r.fileSizeBytes ? (r.fileSizeBytes > 1024 * 1024 ? `${(r.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(r.fileSizeBytes / 1024)} KB`) : '1.2 MB';
+        const ext = r.originalFileName ? r.originalFileName.split('.').pop().toUpperCase() : 'PDF';
 
-          <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--black);">${r.title}</h3>
+        return `
+          <div class="card card-interactive" data-resource-id="${r.id}" style="display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge badge-bordeaux">${r.category || 'General'}</span>
+              <span class="badge badge-taupe">${ext} (${sizeKb})</span>
+            </div>
 
-          <div style="font-size: 0.85rem; color: var(--stone-brown); margin-bottom: 1.25rem;">
-            Uploaded by <strong>${r.uploader}</strong> (${r.dept}) • ${r.date}
-          </div>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--black);">${r.title}</h3>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
-            <span style="font-size: 0.825rem; color: var(--stone-brown);">📥 <strong id="dl-cnt-${r.id}">${r.downloads}</strong> Downloads</span>
-            <button class="btn btn-sm btn-primary" onclick="downloadResource('${r.id}', '${r.title}')">
-              ⬇️ Download File
-            </button>
+            <p style="color: var(--stone-brown); font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">
+              ${r.description || 'Shared study material and technical resource.'}
+            </p>
+
+            <div style="font-size: 0.825rem; color: var(--stone-brown); margin-bottom: 1.25rem;">
+              Uploaded by <strong>${uploaderName}</strong> • ${formatTimeAgo(r.createdAt)}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+              <span style="font-size: 0.825rem; color: var(--stone-brown);">📁 ${r.originalFileName || 'file.pdf'}</span>
+              <!-- Issue 6: Real backend download endpoint -->
+              <button class="btn btn-sm btn-primary" onclick="downloadResource('${r.id}', '${r.originalFileName || r.title}')">
+                ⬇️ Download File
+              </button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterResources() {
@@ -147,7 +186,9 @@
       const cat = document.getElementById("res-cat-filter").value;
 
       const filtered = resourcesList.filter(r => {
-        const matchesSearch = r.title.toLowerCase().includes(search) || r.uploader.toLowerCase().includes(search);
+        const matchesSearch = (r.title && r.title.toLowerCase().includes(search)) ||
+                              (r.description && r.description.toLowerCase().includes(search)) ||
+                              (r.uploadedBy && r.uploadedBy.username.toLowerCase().includes(search));
         const matchesCat = !cat || r.category === cat;
         return matchesSearch && matchesCat;
       });
@@ -155,47 +196,82 @@
       renderResources(filtered);
     }
 
-    let selectedFileName = "";
+    function openUploadModal() {
+      if (!getAuthToken()) {
+        showToast("Please sign in to upload resources.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+      document.getElementById("upload-resource-modal").classList.add("show");
+    }
+
     function handleResFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
-        selectedFileName = file.name;
-        document.getElementById("res-upload-status").innerText = `Selected: ${file.name}`;
+        document.getElementById("res-upload-status").innerText = `Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
       }
     }
 
-    function handleUploadResource(e) {
-      e.preventDefault();
-      const title = document.getElementById("res-title-input").value;
-      const cat = document.getElementById("res-cat-select").value;
+    // Issue 6: Real download trigger
+    function downloadResource(id, filename) {
+      showToast(`Initiating download for ${filename}...`, "info");
+      const downloadUrl = `${API_BASE_URL}/api/resources/${id}/download`;
 
-      const newRes = {
-        id: "res-" + Date.now(),
-        title: title,
-        category: cat,
-        uploader: MOCK_DATA.currentUser.name,
-        dept: MOCK_DATA.currentUser.department,
-        downloads: 1,
-        format: selectedFileName ? selectedFileName.split('.').pop().toUpperCase() : "PDF",
-        size: "3.5 MB",
-        date: new Date().toISOString().split('T')[0]
-      };
+      // Use a hidden anchor tag to trigger browser download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', filename || 'resource');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-      resourcesList.unshift(newRes);
-      setStoredData("resources", resourcesList);
-      renderResources(resourcesList);
-
-      document.getElementById("upload-resource-modal").classList.remove("show");
-      showToast("Resource uploaded successfully to campus library!", "success");
+      showToast("Download started!", "success");
     }
 
-    function downloadResource(id, title) {
-      const item = resourcesList.find(r => r.id === id);
-      if (item) {
-        item.downloads += 1;
-        setStoredData("resources", resourcesList);
-        document.getElementById(`dl-cnt-${id}`).innerText = item.downloads;
-        showToast(`Downloading file: "${title}"`, "success");
+    async function handleUploadResource(e) {
+      e.preventDefault();
+      const title = document.getElementById("res-title-input").value.trim();
+      const description = document.getElementById("res-desc-input").value.trim();
+      const category = document.getElementById("res-cat-select").value;
+      const fileInput = document.getElementById("res-file-input");
+      const submitBtn = document.getElementById("res-submit-btn");
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("Please choose a file to upload.", "error");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Uploading...";
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE_URL}/api/resources`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Upload failed" }));
+          throw new Error(err.error || "Upload failed");
+        }
+
+        document.getElementById("upload-resource-modal").classList.remove("show");
+        showToast("Resource uploaded successfully!", "success");
+        loadResources();
+      } catch (err) {
+        showToast(err.message || "Failed to upload resource", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Upload Resource";
       }
     }
   </script>

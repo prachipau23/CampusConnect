@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Directory – CampusConnect</title>
+  <title>Campus Directory – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -16,161 +16,134 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Student Directory</h1>
-        <p class="page-subtitle">Find peer developers, designers, and researchers across all campus departments.</p>
+        <h1 class="page-title">Campus Directory</h1>
+        <p class="page-subtitle">Connect with student developers, peer researchers, and faculty mentors.</p>
       </div>
     </div>
 
-    <!-- Search & Filter Bar -->
+    <!-- Search & Filters -->
     <div class="filter-bar">
       <div class="search-input-wrapper">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="dir-search" class="form-control" placeholder="Search by name, skill (e.g. Java, React)..." oninput="filterDirectory()">
+        <input type="text" id="dir-search" class="form-control" placeholder="Search by name, department, or technical skill..." oninput="filterDirectory()">
       </div>
 
-      <div style="min-width: 180px;">
+      <div style="min-width: 200px;">
         <select id="dir-dept-filter" class="form-select" onchange="filterDirectory()">
           <option value="">All Departments</option>
           <option value="Computer Science">Computer Science</option>
           <option value="Information Technology">Information Technology</option>
-          <option value="Electrical Engineering">Electrical Engineering</option>
-          <option value="AI & Data Science">AI & Data Science</option>
-          <option value="Mechanical Engineering">Mechanical Engineering</option>
-        </select>
-      </div>
-
-      <div style="min-width: 140px;">
-        <select id="dir-year-filter" class="form-select" onchange="filterDirectory()">
-          <option value="">All Years</option>
-          <option value="1st Year">1st Year</option>
-          <option value="2nd Year">2nd Year</option>
-          <option value="3rd Year">3rd Year</option>
-          <option value="4th Year">4th Year</option>
+          <option value="Data Science">Data Science</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Administration">Faculty / Admin</option>
         </select>
       </div>
     </div>
 
-    <!-- Student Cards Grid -->
-    <div class="grid grid-cols-3" id="students-grid">
-      <!-- Populated via JS -->
+    <!-- Directory Grid -->
+    <div class="grid grid-cols-3" id="directory-grid">
+      <div style="grid-column: span 3; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading campus directory...
+      </div>
     </div>
 
   </main>
-
-  <!-- Invite to Team Modal -->
-  <div class="modal-backdrop" id="invite-team-modal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3 class="modal-title">Invite Student to Project Team</h3>
-        <button class="modal-close" data-modal-close>&times;</button>
-      </div>
-      <form onsubmit="handleSendInvite(event)">
-        <div class="modal-body">
-          <p style="margin-bottom: 1rem; color: var(--stone-brown); font-size: 0.9rem;">
-            Sending invite to <strong id="invitee-name" style="color: var(--black);">Student</strong>
-          </p>
-
-          <div class="form-group">
-            <label class="form-label">Select Your Team *</label>
-            <select class="form-select" required>
-              <option value="tm-401">Team CampusConnect Core</option>
-              <option value="tm-402">EcoPulse Hardware Squad</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Invitation Message</label>
-            <textarea class="form-control" rows="3" placeholder="Hey! We saw your profile and skills in the directory and would love for you to join our project team..."></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Send Invitation</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Footer -->
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let students = MOCK_DATA.students;
+    let directoryList = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderStudents(students);
+      loadDirectory();
     });
 
-    function renderStudents(list) {
-      const grid = document.getElementById("students-grid");
+    async function loadDirectory() {
+      try {
+        directoryList = await apiGet("/api/directory");
+        renderDirectory(directoryList);
+      } catch (err) {
+        document.getElementById("directory-grid").innerHTML = `
+          <div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
+            <h3>Error loading directory</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderDirectory(list) {
+      const grid = document.getElementById("directory-grid");
       if (!grid) return;
 
-      if (list.length === 0) {
+      if (!list || list.length === 0) {
         grid.innerHTML = `<div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
-          <h3>No students found</h3>
-          <p style="color: var(--stone-brown);">Try adjusting your search query or filters.</p>
+          <h3>No profiles found</h3>
+          <p style="color: var(--stone-brown);">Try a different search query or filter.</p>
         </div>`;
         return;
       }
 
-      grid.innerHTML = list.map(s => `
-        <div class="card card-interactive" data-student-id="${s.id}" style="display: flex; flex-direction: column;">
-          <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem;">
-            <div class="user-avatar" style="width: 48px; height: 48px; font-size: 1.1rem;">${s.avatar}</div>
-            <div>
-              <h3 style="font-size: 1.1rem; line-height: 1.2;">${s.name}</h3>
-              <div style="font-size: 0.8rem; color: var(--stone-brown); font-weight: 600;">${s.department}</div>
-              <span class="badge badge-taupe" style="margin-top: 0.2rem; font-size: 0.725rem;">${s.year}</span>
+      grid.innerHTML = list.map(p => {
+        const initials = p.avatarInitials || (p.fullName ? p.fullName.substring(0, 2).toUpperCase() : "CC");
+        const skillsArr = p.skills ? p.skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3) : [];
+        const isFaculty = p.user && (p.user.role === 'TEACHER' || p.user.role === 'ADMIN' || p.user.role === 'MENTOR');
+
+        return `
+          <div class="card card-interactive" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: var(--night-bordeaux); color: var(--white); font-weight: 800; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; border: 2px solid var(--white-smoke);">
+              ${initials}
+            </div>
+
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem; color: var(--black);">
+              <a href="profile.html?userId=${p.user ? p.user.id : ''}" style="color: inherit;">${p.fullName}</a>
+            </h3>
+
+            <p style="color: var(--stone-brown); font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">
+              ${p.department || 'General Department'}
+            </p>
+
+            <span class="badge ${isFaculty ? 'badge-dark' : 'badge-bordeaux'}" style="margin-bottom: 1rem;">
+              ${isFaculty ? (p.user.role === 'ADMIN' ? 'Administrator' : 'Faculty / Mentor') : (p.yearOfStudy || 'Student')}
+            </span>
+
+            <p style="color: var(--stone-brown); font-size: 0.825rem; line-height: 1.4; margin-bottom: 1rem; max-height: 42px; overflow: hidden; text-overflow: ellipsis;">
+              ${p.bio || 'Campus community member.'}
+            </p>
+
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem;">
+              ${skillsArr.map(s => `<span class="badge badge-taupe" style="font-size: 0.75rem;">${s}</span>`).join('')}
+            </div>
+
+            <div style="margin-top: auto; width: 100%; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+              <a href="profile.html?userId=${p.user ? p.user.id : ''}" class="btn btn-sm btn-outline" style="width: 100%;">
+                View Profile &rarr;
+              </a>
             </div>
           </div>
-
-          <p style="color: var(--stone-brown); font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5; flex: 1;">
-            ${s.bio}
-          </p>
-
-          <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-            ${s.skills.map(sk => `<span class="badge badge-stone" style="font-size: 0.75rem;">${sk}</span>`).join('')}
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: auto;">
-            <a href="${s.github}" target="_blank" style="font-size: 0.8rem; font-weight: 600;">🐙 GitHub</a>
-            <button class="btn btn-sm btn-outline" onclick="openInviteModal('${s.name}')">
-              ✉️ Invite
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterDirectory() {
       const search = document.getElementById("dir-search").value.toLowerCase();
-      const dept = document.getElementById("dir-dept-filter").value;
-      const year = document.getElementById("dir-year-filter").value;
+      const dept = document.getElementById("dir-dept-filter").value.toLowerCase();
 
-      const filtered = students.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(search) || s.bio.toLowerCase().includes(search) || s.skills.some(sk => sk.toLowerCase().includes(search));
-        const matchesDept = !dept || s.department.includes(dept);
-        const matchesYear = !year || s.year === year;
-        return matchesSearch && matchesDept && matchesYear;
+      const filtered = directoryList.filter(p => {
+        const matchesSearch = (p.fullName && p.fullName.toLowerCase().includes(search)) ||
+                              (p.department && p.department.toLowerCase().includes(search)) ||
+                              (p.skills && p.skills.toLowerCase().includes(search));
+        const matchesDept = !dept || (p.department && p.department.toLowerCase().includes(dept));
+        return matchesSearch && matchesDept;
       });
 
-      renderStudents(filtered);
-    }
-
-    function openInviteModal(studentName) {
-      document.getElementById("invitee-name").innerText = studentName;
-      document.getElementById("invite-team-modal").classList.add("show");
-    }
-
-    function handleSendInvite(e) {
-      e.preventDefault();
-      document.getElementById("invite-team-modal").classList.remove("show");
-      showToast("Invitation successfully sent to student!", "success");
+      renderDirectory(filtered);
     }
   </script>
 </body>

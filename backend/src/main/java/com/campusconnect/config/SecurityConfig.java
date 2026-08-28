@@ -66,8 +66,8 @@ public class SecurityConfig {
                         "/api/resources/**",
                         "/api/directory/**"
                 ).permitAll()
-                // Admin/Teacher REST — role gated
-                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "TEACHER")
+                // Admin/Teacher/Mentor REST — role gated
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "TEACHER", "MENTOR")
                 // All other API calls need auth
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

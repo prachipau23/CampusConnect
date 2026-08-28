@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hackathons & Challenges – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .member-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+  </style>
 </head>
 <body>
 
@@ -17,7 +25,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Hackathons & Innovation Contests</h1>
-        <p class="page-subtitle">Participate in university technology sprints, solve real problems, and win prize pools.</p>
+        <p class="page-subtitle">Participate in technology sprints, solve real challenges, and win cash prize pools.</p>
       </div>
     </div>
 
@@ -27,58 +35,79 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="hack-search" class="form-control" placeholder="Search hackathon title, track..." oninput="filterHackathons()">
+        <input type="text" id="hack-search" class="form-control" placeholder="Search hackathon title, organizer, track..." oninput="filterHackathons()">
       </div>
 
       <div style="min-width: 180px;">
-        <select id="hack-status-filter" class="form-select" onchange="filterHackathons()">
-          <option value="">All Statuses</option>
-          <option value="Upcoming">Upcoming</option>
-          <option value="Ongoing">Ongoing</option>
+        <select id="hack-mode-filter" class="form-select" onchange="filterHackathons()">
+          <option value="">All Modes</option>
+          <option value="Online">Online / Hybrid</option>
+          <option value="In-Person">In-Person</option>
         </select>
       </div>
     </div>
 
     <!-- Hackathons Grid -->
     <div class="grid grid-cols-2" id="hackathons-grid">
-      <!-- Populated via JS -->
+      <div style="grid-column: span 2; text-align: center; padding: 3rem; color: var(--stone-brown);">
+        Loading live hackathons...
+      </div>
     </div>
 
   </main>
 
-  <!-- Register Team Modal -->
+  <!-- Register Team Modal (Issue 5: Specific to each hackathon with freeform members) -->
   <div class="modal-backdrop" id="register-hack-modal">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 520px;">
       <div class="modal-header">
         <h3 class="modal-title">Register Team for Hackathon</h3>
         <button class="modal-close" data-modal-close>&times;</button>
       </div>
       <form onsubmit="handleHackRegister(event)">
         <div class="modal-body">
-          <p style="margin-bottom: 1rem; color: var(--stone-brown); font-size: 0.9rem;">
-            Registering for: <strong id="hack-event-title" style="color: var(--black);">CampusHack 2026</strong>
+          <p style="margin-bottom: 1.25rem; color: var(--stone-brown); font-size: 0.925rem;">
+            Registering for: <strong id="hack-event-title" style="color: var(--night-bordeaux); font-size: 1rem;">--</strong>
           </p>
 
+          <input type="hidden" id="current-hack-id">
+
+          <!-- Team Name -->
           <div class="form-group">
-            <label class="form-label">Select Registered Team *</label>
-            <select class="form-select" required>
-              <option value="tm-401">Team CampusConnect Core</option>
-              <option value="tm-402">EcoPulse Hardware Squad</option>
+            <label class="form-label" for="hack-team-name">Team Name *</label>
+            <input type="text" id="hack-team-name" class="form-control" placeholder="e.g. ByteCraft Innovators" required>
+          </div>
+
+          <!-- Selected Track -->
+          <div class="form-group">
+            <label class="form-label" for="hack-track-select">Selected Track / Theme *</label>
+            <select class="form-select" id="hack-track-select" required>
+              <option value="General Innovation">General Innovation Track</option>
+              <option value="AI & Machine Learning">AI & Machine Learning</option>
+              <option value="Smart Campus & IoT">Smart Campus & IoT</option>
+              <option value="FinTech & Web3">FinTech & Web3</option>
+              <option value="Healthcare & BioTech">Healthcare & BioTech</option>
+              <option value="Sustainable Tech">Sustainable Tech & Climate</option>
             </select>
           </div>
 
+          <!-- Freeform Dynamic Teammates (Issue 5) -->
           <div class="form-group">
-            <label class="form-label">Selected Track *</label>
-            <select class="form-select" required id="hack-track-select">
-              <option value="AI for Education">AI for Education</option>
-              <option value="Smart Campus Sustainability">Smart Campus Sustainability</option>
-              <option value="Web3 Infrastructure">Web3 Infrastructure</option>
-            </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <label class="form-label" style="margin-bottom: 0;">Team Members (Max 5)</label>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="addMemberField()" id="add-member-btn" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                ➕ Add Teammate
+              </button>
+            </div>
+            <div id="members-container">
+              <!-- Dynamically populated rows -->
+            </div>
+            <small style="color: var(--stone-brown); font-size: 0.775rem;">You are automatically included as the Team Leader.</small>
           </div>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-          <button type="submit" class="btn btn-primary">Confirm Team Registration</button>
+          <button type="submit" id="hack-submit-btn" class="btn btn-primary">Confirm Team Registration</button>
         </div>
       </form>
     </div>
@@ -88,20 +117,35 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    let hackathonsList = MOCK_DATA.hackathons;
+    let hackathonsList = [];
+    let memberCount = 1;
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderHackathons(hackathonsList);
+      loadHackathons();
     });
+
+    async function loadHackathons() {
+      try {
+        hackathonsList = await apiGet("/api/hackathons");
+        renderHackathons(hackathonsList);
+      } catch (err) {
+        document.getElementById("hackathons-grid").innerHTML = `
+          <div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+            <h3>Error loading hackathons</h3>
+            <p style="color: var(--stone-brown);">${err.message}</p>
+          </div>
+        `;
+      }
+    }
 
     function renderHackathons(list) {
       const grid = document.getElementById("hackathons-grid");
       if (!grid) return;
 
-      if (list.length === 0) {
+      if (!list || list.length === 0) {
         grid.innerHTML = `<div class="card" style="grid-column: span 2; text-align: center; padding: 3rem;">
           <h3>No hackathons found</h3>
           <p style="color: var(--stone-brown);">Check back soon for new campus hackathons.</p>
@@ -109,67 +153,145 @@
         return;
       }
 
-      grid.innerHTML = list.map(h => `
-        <div class="card card-interactive" data-hackathon-id="${h.id}" style="display: flex; flex-direction: column;">
-          <div style="background-color: ${h.bannerBg}; color: var(--white); padding: 1.25rem; border-radius: var(--radius-md); margin: -1.5rem -1.5rem 1.25rem; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span class="badge badge-dark">${h.status}</span>
-              <span style="font-size: 0.8rem; font-weight: 700;">📅 ${h.dates}</span>
-            </div>
-            <h2 style="font-size: 1.35rem; color: var(--white);">${h.title}</h2>
-            <div style="font-size: 0.85rem; opacity: 0.9;">Organized by ${h.organizer}</div>
-          </div>
+      grid.innerHTML = list.map(h => {
+        const prizeFormatted = h.prizeAmount ? `₹${Number(h.prizeAmount).toLocaleString('en-IN')}` : '₹50,000+';
+        const dateFormatted = h.startDate ? `${h.startDate} ${h.endDate ? 'to ' + h.endDate : ''}` : 'Upcoming 2026';
 
-          <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--white-smoke); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
-            <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Prize Pool</div>
-              <div style="font-weight: 800; color: var(--night-bordeaux); font-size: 1.05rem;">${h.prizePool}</div>
+        return `
+          <div class="card card-interactive" data-hackathon-id="${h.id}" style="display: flex; flex-direction: column;">
+            <div style="background: linear-gradient(135deg, var(--night-bordeaux) 0%, var(--black) 100%); color: var(--white); padding: 1.25rem; border-radius: var(--radius-md); margin: -1.5rem -1.5rem 1.25rem; position: relative;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span class="badge badge-dark">${h.mode || 'Online'}</span>
+                <span style="font-size: 0.8rem; font-weight: 700;">📅 ${dateFormatted}</span>
+              </div>
+              <h2 style="font-size: 1.35rem; color: var(--white);">${h.name}</h2>
+              <div style="font-size: 0.85rem; opacity: 0.9;">Organized by ${h.organizer || 'Campus Innovation Cell'}</div>
             </div>
-            <div style="text-align: right;">
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Team Size</div>
-              <div style="font-weight: 600; font-size: 0.9rem;">${h.teamSize}</div>
-            </div>
-          </div>
 
-          <div style="margin-bottom: 1.25rem;">
-            <div style="font-size: 0.775rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700; margin-bottom: 0.4rem;">Challenge Tracks:</div>
-            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-              ${h.tracks.map(t => `<span class="badge badge-taupe">${t}</span>`).join('')}
+            <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+              ${h.description || 'Join student engineers and innovators in this flagship competitive sprint.'}
+            </p>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--white-smoke); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+              <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Prize Pool</div>
+                <div style="font-weight: 800; color: var(--night-bordeaux); font-size: 1.15rem;">${prizeFormatted}</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Location / Mode</div>
+                <div style="font-weight: 600; font-size: 0.9rem;">${h.location || 'Campus / Online'}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
+              <span style="font-size: 0.825rem; color: var(--stone-brown);">📍 Open Registration</span>
+              <button class="btn btn-sm btn-primary" onclick="openHackModal('${h.id}', '${h.name}')">
+                🚀 Register Team
+              </button>
             </div>
           </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: auto;">
-            <span style="font-size: 0.825rem; color: var(--stone-brown);">👥 <strong>${h.registeredCount}</strong> Teams Registered</span>
-            <button class="btn btn-sm btn-primary" onclick="openHackModal('${h.title}')">
-              🚀 Register Team
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterHackathons() {
       const search = document.getElementById("hack-search").value.toLowerCase();
-      const status = document.getElementById("hack-status-filter").value;
+      const mode = document.getElementById("hack-mode-filter").value;
 
       const filtered = hackathonsList.filter(h => {
-        const matchesSearch = h.title.toLowerCase().includes(search) || h.tracks.some(t => t.toLowerCase().includes(search));
-        const matchesStatus = !status || h.status === status;
-        return matchesSearch && matchesStatus;
+        const matchesSearch = (h.name && h.name.toLowerCase().includes(search)) ||
+                              (h.organizer && h.organizer.toLowerCase().includes(search)) ||
+                              (h.description && h.description.toLowerCase().includes(search));
+        const matchesMode = !mode || (h.mode && h.mode.toLowerCase() === mode.toLowerCase());
+        return matchesSearch && matchesMode;
       });
 
       renderHackathons(filtered);
     }
 
-    function openHackModal(title) {
+    // Open Modal for specific hackathon (Issue 5)
+    function openHackModal(id, title) {
+      if (!getAuthToken()) {
+        showToast("Please sign in to register a team.", "info");
+        setTimeout(() => { window.location.href = "login.html"; }, 800);
+        return;
+      }
+
+      document.getElementById("current-hack-id").value = id;
       document.getElementById("hack-event-title").innerText = title;
+      document.getElementById("hack-team-name").value = "";
+
+      // Initialize with leader + 1 empty teammate slot
+      const container = document.getElementById("members-container");
+      const user = getStoredUser();
+      container.innerHTML = `
+        <div class="member-row" style="background: var(--white-smoke); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--night-bordeaux); width: 80px;">Leader:</span>
+          <span style="font-size: 0.85rem; flex: 1;">${user ? user.fullName || user.username : 'You'} (${user ? user.email : 'Primary'})</span>
+        </div>
+      `;
+      memberCount = 1;
+      addMemberField();
+
       document.getElementById("register-hack-modal").classList.add("show");
     }
 
-    function handleHackRegister(e) {
+    function addMemberField() {
+      if (memberCount >= 5) {
+        showToast("Maximum team size is 5 members.", "info");
+        return;
+      }
+      memberCount++;
+      const container = document.getElementById("members-container");
+      const div = document.createElement("div");
+      div.className = "member-row";
+      div.id = `member-row-${memberCount}`;
+      div.innerHTML = `
+        <input type="text" class="form-control form-control-sm member-name" placeholder="Member Name" style="flex: 1;" required>
+        <input type="email" class="form-control form-control-sm member-email" placeholder="Email" style="flex: 1;" required>
+        <button type="button" class="btn btn-sm btn-ghost" style="color: #dc2626; padding: 0.2rem 0.5rem;" onclick="removeMemberField('member-row-${memberCount}')">✕</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeMemberField(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+        memberCount--;
+      }
+    }
+
+    // Submit team registration to backend (Issue 5)
+    async function handleHackRegister(e) {
       e.preventDefault();
-      document.getElementById("register-hack-modal").classList.remove("show");
-      showToast("Team registered for hackathon!", "success");
+      const hackId = document.getElementById("current-hack-id").value;
+      const teamName = document.getElementById("hack-team-name").value.trim();
+      const track = document.getElementById("hack-track-select").value;
+      const submitBtn = document.getElementById("hack-submit-btn");
+
+      const memberNames = Array.from(document.querySelectorAll(".member-name")).map(i => i.value.trim()).filter(Boolean);
+      const memberEmails = Array.from(document.querySelectorAll(".member-email")).map(i => i.value.trim()).filter(Boolean);
+      const membersList = memberNames.map((name, idx) => ({ name, email: memberEmails[idx] || "" }));
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Registering...";
+
+      try {
+        await apiPost(`/api/hackathons/${hackId}/register`, {
+          teamName,
+          track,
+          members: membersList
+        });
+
+        document.getElementById("register-hack-modal").classList.remove("show");
+        showToast(`Team '${teamName}' registered successfully!`, "success");
+      } catch (err) {
+        showToast(err.message || "Failed to register team", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Confirm Team Registration";
+      }
     }
   </script>
 </body>

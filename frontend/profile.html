@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Profile – CampusConnect</title>
+  <title>User Profile – CampusConnect</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
     .progress-bar-bg {
@@ -45,8 +45,8 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Student Profile</h1>
-        <p class="page-subtitle">Manage your academic credentials, skills, external links, and resume.</p>
+        <h1 class="page-title" id="page-profile-title">User Profile</h1>
+        <p class="page-subtitle">Manage your academic credentials, skills, external links, and projects.</p>
       </div>
       <button class="btn btn-primary" id="profile-edit-btn" onclick="toggleEditMode()">
         ✏️ Edit Profile
@@ -59,33 +59,34 @@
       <div class="card" style="grid-column: span 1;">
         <div style="text-align: center; margin-bottom: 1.5rem;">
           <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-            <div class="profile-avatar-xl" id="view-avatar">AS</div>
+            <div class="profile-avatar-xl" id="view-avatar">CC</div>
           </div>
-          <h2 id="view-name" style="font-size: 1.4rem;">Aarav Sharma</h2>
-          <p id="view-dept" style="color: var(--stone-brown); font-size: 0.9rem; font-weight: 600;">Computer Science & Engineering</p>
-          <span class="badge badge-bordeaux" id="view-year" style="margin-top: 0.5rem;">3rd Year (Class of 2027)</span>
+          <h2 id="view-name" style="font-size: 1.4rem;">Loading...</h2>
+          <p id="view-email" style="color: var(--stone-brown); font-size: 0.85rem; margin-bottom: 0.25rem;"></p>
+          <p id="view-dept" style="color: var(--stone-brown); font-size: 0.9rem; font-weight: 600;">Department</p>
+          <span class="badge badge-bordeaux" id="view-year" style="margin-top: 0.5rem;">Student</span>
         </div>
 
         <!-- Profile Completion Metric -->
         <div style="background-color: var(--night-bordeaux-light); border: 1px solid var(--dusty-taupe-light); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 700; color: var(--night-bordeaux);">
-            <span>Profile Completion</span>
-            <span id="completion-text">85%</span>
+            <span>Profile Status</span>
+            <span id="completion-text">Active</span>
           </div>
           <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="completion-bar" style="width: 85%;"></div>
+            <div class="progress-bar-fill" id="completion-bar" style="width: 100%;"></div>
           </div>
-          <p style="font-size: 0.775rem; color: var(--stone-brown); margin-top: 0.4rem;">Add portfolio link to reach 100%</p>
+          <p style="font-size: 0.775rem; color: var(--stone-brown); margin-top: 0.4rem;" id="role-badge-text">Verified Account</p>
         </div>
 
         <!-- Social & Code Links -->
         <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
           <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--stone-brown); margin-bottom: 0.75rem; letter-spacing: 0.05em;">External Links</h4>
           <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
-            <a href="https://github.com/aaravsharma" target="_blank" id="view-github" style="display: flex; align-items: center; gap: 0.5rem;">
+            <a href="#" target="_blank" id="view-github" style="display: flex; align-items: center; gap: 0.5rem;">
               🐙 GitHub Repository
             </a>
-            <a href="https://linkedin.com/in/aaravsharma-dev" target="_blank" id="view-linkedin" style="display: flex; align-items: center; gap: 0.5rem;">
+            <a href="#" target="_blank" id="view-linkedin" style="display: flex; align-items: center; gap: 0.5rem;">
               💼 LinkedIn Profile
             </a>
           </div>
@@ -98,118 +99,78 @@
         <!-- View Mode Panel -->
         <div id="view-mode-panel">
           <div style="margin-bottom: 2rem;">
-            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.5rem;">About Me</h3>
-            <p id="view-bio" style="color: var(--stone-brown); font-size: 0.95rem; line-height: 1.6;">
-              Passionate Full-Stack Developer & AI Enthusiast. Building next-gen campus innovation tools and open-source projects using Java Spring Boot, React, and TypeScript.
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem; color: var(--black);">About / Bio</h3>
+            <p id="view-bio" style="color: var(--stone-brown); line-height: 1.6; font-size: 0.95rem;">
+              No bio provided yet. Click 'Edit Profile' to add your introduction.
             </p>
           </div>
 
           <div style="margin-bottom: 2rem;">
-            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.75rem;">Technical Skills</h3>
-            <div id="view-skills-chips" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-              <span class="badge badge-taupe">Java</span>
-              <span class="badge badge-taupe">Spring Boot</span>
-              <span class="badge badge-taupe">React</span>
-              <span class="badge badge-taupe">TypeScript</span>
-              <span class="badge badge-taupe">PostgreSQL</span>
-              <span class="badge badge-taupe">Docker</span>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem; color: var(--black);">Skills & Expertise</h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="view-skills-chips">
+              <span class="badge badge-taupe">General</span>
             </div>
           </div>
 
-          <!-- Resume Upload Section -->
-          <div style="margin-bottom: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 0.75rem;">Student Resume</h3>
-            
-            <div style="display: flex; align-items: center; justify-content: space-between; background-color: var(--white-smoke); border: 1px solid var(--border-color); padding: 1rem 1.25rem; border-radius: var(--radius-md);">
-              <div style="display: flex; align-items: center; gap: 0.85rem;">
-                <span style="font-size: 1.8rem; color: var(--night-bordeaux);">📄</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 0.925rem;" id="resume-filename">Aarav_Sharma_Resume_2026.pdf</div>
-                  <div style="font-size: 0.775rem; color: var(--stone-brown);">Uploaded on July 15, 2026 • 1.4 MB</div>
-                </div>
-              </div>
-              <button class="btn btn-sm btn-outline" onclick="showToast('Downloading resume copy...', 'info')">Download PDF</button>
-            </div>
-          </div>
-
-          <!-- Published Projects List -->
           <div>
-            <h3 style="font-size: 1.1rem; color: var(--night-bordeaux); margin-bottom: 1rem;">Projects Contributed To</h3>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <div style="padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <strong style="font-size: 0.95rem;">CampusConnect Innovation Platform</strong>
-                  <div style="font-size: 0.8rem; color: var(--stone-brown);">Role: Lead Backend Architect</div>
-                </div>
-                <a href="project-detail.html?id=prj-201" class="btn btn-sm btn-ghost">View Project &rarr;</a>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem; color: var(--black);">Academic Details</h3>
+            <div style="background-color: var(--white-smoke); border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Department</div>
+                <div id="view-dept-detail" style="font-weight: 600; font-size: 0.95rem; color: var(--black);">--</div>
+              </div>
+              <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--stone-brown); font-weight: 700;">Year / Designation</div>
+                <div id="view-year-detail" style="font-weight: 600; font-size: 0.95rem; color: var(--black);">--</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Edit Mode Form (Hidden by default) -->
+        <!-- Edit Mode Form -->
         <form id="edit-mode-form" style="display: none;" onsubmit="saveProfileChanges(event)">
-          <h3 style="font-size: 1.2rem; color: var(--night-bordeaux); margin-bottom: 1.25rem;">Edit Student Credentials</h3>
-
-          <div class="form-group">
-            <label class="form-label" for="edit-name">Full Name</label>
-            <input type="text" id="edit-name" class="form-control" value="Aarav Sharma" required>
-          </div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--night-bordeaux);">Edit Profile Information</h3>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label" for="edit-dept">Department</label>
-              <select id="edit-dept" class="form-select">
-                <option value="Computer Science & Engineering" selected>Computer Science & Engineering</option>
-                <option value="Information Technology">Information Technology</option>
-                <option value="AI & Data Science">AI & Data Science</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
-              </select>
+              <label class="form-label" for="edit-name">Full Name *</label>
+              <input type="text" id="edit-name" class="form-control" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="edit-year">Year</label>
-              <select id="edit-year" class="form-select">
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-              </select>
+              <label class="form-label" for="edit-dept">Department / Domain</label>
+              <input type="text" id="edit-dept" class="form-control">
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="edit-bio">Student Bio</label>
-            <textarea id="edit-bio" class="form-control" rows="3">Passionate Full-Stack Developer & AI Enthusiast. Building next-gen campus innovation tools and open-source projects using Java Spring Boot, React, and TypeScript.</textarea>
+            <label class="form-label" for="edit-year">Year of Study / Graduation Year / Title</label>
+            <input type="text" id="edit-year" class="form-control" placeholder="e.g. Class of 2027 or Professor">
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="edit-skills">Skills (Comma Separated)</label>
-            <input type="text" id="edit-skills" class="form-control" value="Java, Spring Boot, React, TypeScript, PostgreSQL, Docker">
+            <label class="form-label" for="edit-skills">Skills / Areas of Focus (comma separated)</label>
+            <input type="text" id="edit-skills" class="form-control" placeholder="e.g. Java, Python, React, Cloud">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-bio">About & Bio</label>
+            <textarea id="edit-bio" class="form-control" rows="3" placeholder="Share your passions, background, and interests..."></textarea>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label" for="edit-github">GitHub URL</label>
-              <input type="url" id="edit-github" class="form-control" value="https://github.com/aaravsharma">
+              <input type="url" id="edit-github" class="form-control" placeholder="https://github.com/username">
             </div>
             <div class="form-group">
               <label class="form-label" for="edit-linkedin">LinkedIn URL</label>
-              <input type="url" id="edit-linkedin" class="form-control" value="https://linkedin.com/in/aaravsharma-dev">
-            </div>
-          </div>
-
-          <!-- Drag and Drop Resume Zone -->
-          <div class="form-group">
-            <label class="form-label">Update Resume (PDF)</label>
-            <div class="dropzone" id="resume-dropzone" onclick="document.getElementById('resume-file-input').click()">
-              <div class="dropzone-icon">📤</div>
-              <div style="font-weight: 700; font-size: 0.95rem; color: var(--black);">Click or Drag & Drop new resume file</div>
-              <div style="font-size: 0.8rem; color: var(--stone-brown);">Supported formats: PDF (Max 5MB)</div>
-              <input type="file" id="resume-file-input" accept=".pdf" style="display: none;" onchange="handleFileSelect(event)">
+              <input type="url" id="edit-linkedin" class="form-control" placeholder="https://linkedin.com/in/username">
             </div>
           </div>
 
           <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
             <button type="button" class="btn btn-outline" onclick="toggleEditMode()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" id="save-profile-btn" class="btn btn-primary">Save Changes</button>
           </div>
         </form>
 
@@ -223,10 +184,93 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
     let isEditing = false;
+    let currentProfile = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadProfile();
+    });
+
+    async function loadProfile() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userIdParam = urlParams.get("userId");
+
+      const token = getAuthToken();
+      if (!token && !userIdParam) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        if (userIdParam) {
+          currentProfile = await apiGet(`/api/profiles/${userIdParam}`);
+          // Disable edit button for other users' profiles
+          const storedUser = getStoredUser();
+          if (!storedUser || storedUser.id != userIdParam) {
+            const editBtn = document.getElementById("profile-edit-btn");
+            if (editBtn) editBtn.style.display = "none";
+          }
+        } else {
+          currentProfile = await apiGet("/api/profiles/me");
+        }
+
+        renderProfileData(currentProfile);
+      } catch (err) {
+        showToast(err.message || "Could not load profile", "error");
+      }
+    }
+
+    function renderProfileData(p) {
+      if (!p) return;
+
+      const initials = p.avatarInitials || (p.fullName ? p.fullName.substring(0, 2).toUpperCase() : "CC");
+      document.getElementById("view-avatar").innerText = initials;
+      document.getElementById("view-name").innerText = p.fullName || (p.user ? p.user.username : "Student");
+      document.getElementById("view-email").innerText = p.user ? p.user.email : "";
+      document.getElementById("view-dept").innerText = p.department || "General";
+      document.getElementById("view-year").innerText = p.yearOfStudy || (p.user ? p.user.role : "Student");
+
+      document.getElementById("view-dept-detail").innerText = p.department || "Not specified";
+      document.getElementById("view-year-detail").innerText = p.yearOfStudy || (p.user ? p.user.role : "Student");
+      document.getElementById("view-bio").innerText = p.bio || "No bio provided yet.";
+
+      // Skills chips
+      const skillsContainer = document.getElementById("view-skills-chips");
+      if (p.skills) {
+        const skillsArr = p.skills.split(",").map(s => s.trim()).filter(Boolean);
+        skillsContainer.innerHTML = skillsArr.map(s => `<span class="badge badge-taupe">${s}</span>`).join("");
+      } else {
+        skillsContainer.innerHTML = `<span class="badge badge-taupe">General</span>`;
+      }
+
+      // External links
+      const gh = document.getElementById("view-github");
+      const li = document.getElementById("view-linkedin");
+      if (p.githubUrl) {
+        gh.href = p.githubUrl;
+        gh.style.display = "flex";
+      } else {
+        gh.href = "#";
+      }
+      if (p.linkedinUrl) {
+        li.href = p.linkedinUrl;
+        li.style.display = "flex";
+      } else {
+        li.href = "#";
+      }
+
+      // Populate edit form
+      document.getElementById("edit-name").value = p.fullName || "";
+      document.getElementById("edit-dept").value = p.department || "";
+      document.getElementById("edit-year").value = p.yearOfStudy || "";
+      document.getElementById("edit-skills").value = p.skills || "";
+      document.getElementById("edit-bio").value = p.bio || "";
+      document.getElementById("edit-github").value = p.githubUrl || "";
+      document.getElementById("edit-linkedin").value = p.linkedinUrl || "";
+    }
 
     function toggleEditMode() {
       isEditing = !isEditing;
@@ -247,34 +291,52 @@
       }
     }
 
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        document.getElementById("resume-filename").innerText = file.name;
-        showToast(`Selected ${file.name} for upload.`, "info");
-      }
-    }
-
-    function saveProfileChanges(e) {
+    async function saveProfileChanges(e) {
       e.preventDefault();
-      const name = document.getElementById("edit-name").value;
-      const dept = document.getElementById("edit-dept").value;
-      const year = document.getElementById("edit-year").value;
-      const bio = document.getElementById("edit-bio").value;
-      const skillsStr = document.getElementById("edit-skills").value;
+      const saveBtn = document.getElementById("save-profile-btn");
+      saveBtn.disabled = true;
+      saveBtn.innerText = "Saving...";
 
-      document.getElementById("view-name").innerText = name;
-      document.getElementById("view-dept").innerText = dept;
-      document.getElementById("view-year").innerText = year;
-      document.getElementById("view-bio").innerText = bio;
+      const fullName = document.getElementById("edit-name").value.trim();
+      const department = document.getElementById("edit-dept").value.trim();
+      const yearOfStudy = document.getElementById("edit-year").value.trim();
+      const skills = document.getElementById("edit-skills").value.trim();
+      const bio = document.getElementById("edit-bio").value.trim();
+      const githubUrl = document.getElementById("edit-github").value.trim();
+      const linkedinUrl = document.getElementById("edit-linkedin").value.trim();
 
-      // Update skills chips
-      const skillsArr = skillsStr.split(",").map(s => s.trim()).filter(Boolean);
-      const skillsContainer = document.getElementById("view-skills-chips");
-      skillsContainer.innerHTML = skillsArr.map(s => `<span class="badge badge-taupe">${s}</span>`).join("");
+      try {
+        const updated = await apiPut("/api/profiles/me", {
+          fullName,
+          department,
+          yearOfStudy,
+          skills,
+          bio,
+          githubUrl,
+          linkedinUrl
+        });
 
-      toggleEditMode();
-      showToast("Profile updated successfully!", "success");
+        currentProfile = updated;
+        renderProfileData(updated);
+
+        // Update stored user cache
+        const storedUser = getStoredUser();
+        if (storedUser) {
+          storedUser.fullName = fullName;
+          storedUser.department = department;
+          storedUser.avatarInitials = fullName.length >= 2 ? fullName.substring(0, 2).toUpperCase() : storedUser.username.substring(0, 2).toUpperCase();
+          setStoredUser(storedUser);
+          renderNavbar();
+        }
+
+        toggleEditMode();
+        showToast("Profile updated successfully!", "success");
+      } catch (err) {
+        showToast(err.message || "Failed to update profile", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Save Changes";
+      }
     }
   </script>
 </body>

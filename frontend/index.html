@@ -100,23 +100,17 @@
     }
 
     .stat-label {
-      font-size: 0.875rem;
       color: var(--stone-brown);
+      font-size: 0.875rem;
+      text-transform: uppercase;
       font-weight: 600;
+      letter-spacing: 0.05em;
       margin-top: 0.25rem;
     }
 
     .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-md);
-      background-color: var(--night-bordeaux-light);
-      color: var(--night-bordeaux);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-size: 2rem;
       margin-bottom: 1rem;
-      font-size: 1.5rem;
     }
   </style>
 </head>
@@ -129,102 +123,98 @@
   <main class="main-content">
 
     <!-- Hero Section -->
-    <section class="hero-section" data-section="hero">
-      <span class="hero-tagline">Campus Innovation Hub</span>
-      <h1 class="hero-title">Connect. Collaborate. Create.</h1>
+    <section class="hero-section">
+      <span class="hero-tagline">🚀 Connect • Build • Ship</span>
+      <h1 class="hero-title">Where Campus Ideas Turn Into Real Products</h1>
       <p class="hero-subtitle">
-        CampusConnect bridges students across all engineering and design departments to showcase projects, recruit project teammates, join domain circles, and enter hackathons.
+        CampusConnect unites student engineers, designers, researchers, and faculty mentors. Showcase projects, recruit teammates, and compete in hackathons.
       </p>
       <div class="hero-cta">
-        <a href="register.html" class="btn btn-primary btn-lg">Get Started Free</a>
-        <a href="projects.html" class="btn btn-outline btn-lg" style="color: var(--white); border-color: var(--dusty-taupe);">Explore Projects</a>
+        <a href="projects.html" class="btn btn-primary btn-lg">Explore Projects</a>
+        <a href="register.html" class="btn btn-outline btn-lg" style="color: var(--white); border-color: var(--dusty-taupe);">Create Free Account</a>
       </div>
     </section>
 
-    <!-- Platform Stats -->
+    <!-- Stats Bar -->
     <div class="stats-bar">
       <div class="stat-card">
-        <div class="stat-number">1,250+</div>
-        <div class="stat-label">Active Students</div>
+        <div class="stat-number" id="stat-projects">10+</div>
+        <div class="stat-label">Active Projects</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">340+</div>
-        <div class="stat-label">Student Projects</div>
+        <div class="stat-number" id="stat-students">20+</div>
+        <div class="stat-label">Campus Innovators</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">18</div>
-        <div class="stat-label">Interest Circles</div>
+        <div class="stat-number" id="stat-circles">6</div>
+        <div class="stat-label">Domain Circles</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">92%</div>
-        <div class="stat-label">Team Placement</div>
+        <div class="stat-number" id="stat-prizes">₹5L+</div>
+        <div class="stat-label">Hackathon Prizes</div>
       </div>
     </div>
 
-    <!-- Feature Overview Grid -->
+    <!-- Core Platform Modules -->
     <section style="margin-bottom: 4rem;">
-      <div class="page-header" style="text-align: center; display: block; margin-bottom: 3rem;">
+      <div class="page-header" style="text-align: center; display: block; margin-bottom: 2.5rem;">
         <h2 class="page-title">Everything You Need to Innovate on Campus</h2>
-        <p class="page-subtitle">Designed to streamline student team building and cross-department collaboration.</p>
+        <p class="page-subtitle" style="margin: 0 auto; max-width: 600px;">
+          Built for seamless collaboration between computer science, electrical, design, and data science students.
+        </p>
       </div>
 
       <div class="grid grid-cols-3">
-        <!-- Feature 1 -->
-        <div class="card card-interactive" data-feature-id="f-1">
-          <div class="feature-icon">🚀</div>
+        <div class="card card-interactive">
+          <div class="feature-icon">💡</div>
           <h3>Project Showcase</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Display your software, hardware, or research projects with detailed tech stacks, repository links, and live demos.
+            Publish academic or passion projects, tag your tech stack, link GitHub repositories, and invite collaborators.
           </p>
-          <a href="projects.html" style="font-weight: 600; font-size: 0.875rem;">Browse Projects &rarr;</a>
+          <a href="projects.html" style="font-weight: 600; font-size: 0.875rem;">Discover Projects &rarr;</a>
         </div>
 
-        <!-- Feature 2 -->
-        <div class="card card-interactive" data-feature-id="f-2">
-          <div class="feature-icon">🔍</div>
-          <h3>Skill-Tagged Directory</h3>
+        <div class="card card-interactive">
+          <div class="feature-icon">🎯</div>
+          <h3>Student Directory</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Find students with specific skills in Java, React, Figma, or Robotics. Filter by department and graduation year.
+            Find students by technical skills (React, PyTorch, Spring Boot), graduation year, and department.
           </p>
-          <a href="directory.html" style="font-weight: 600; font-size: 0.875rem;">Search Directory &rarr;</a>
+          <a href="directory.html" style="font-weight: 600; font-size: 0.875rem;">Browse Directory &rarr;</a>
         </div>
 
-        <!-- Feature 3 -->
-        <div class="card card-interactive" data-feature-id="f-3">
+        <div class="card card-interactive">
           <div class="feature-icon">🌐</div>
           <h3>Domain Circles</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Join interest-based guilds like AI & ML, Web3, UI/UX Design Lab, and Open Source to learn and share ideas.
+            Join specialized interest circles: AI/ML, Web & Mobile, Robotics, Game Dev, and Open Source.
           </p>
-          <a href="circles.html" style="font-weight: 600; font-size: 0.875rem;">Explore Circles &rarr;</a>
+          <a href="circles.html" style="font-weight: 600; font-size: 0.875rem;">Join Circles &rarr;</a>
         </div>
 
-        <!-- Feature 4 -->
-        <div class="card card-interactive" data-feature-id="f-4">
+        <div class="card card-interactive">
           <div class="feature-icon">👥</div>
           <h3>Team Workspaces</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Form project teams, manage task boards, post discussion notes, and publish team announcements in one place.
+            Form project teams, post discussion updates, manage teammates, and share sprint announcements.
           </p>
-          <a href="teams.html" style="font-weight: 600; font-size: 0.875rem;">Find or Create Teams &rarr;</a>
+          <a href="teams.html" style="font-weight: 600; font-size: 0.875rem;">Find Teams &rarr;</a>
         </div>
 
-        <!-- Feature 5 -->
-        <div class="card card-interactive" data-feature-id="f-5">
+        <div class="card card-interactive">
           <div class="feature-icon">🏆</div>
-          <h3>Hackathons & Contests</h3>
+          <h3>Hackathons & Sprints</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Stay updated with upcoming university hackathons, register teams, and win prize pools with incubation support.
+            Stay updated with upcoming hackathons, register teams with named members, and win prize pools.
           </p>
           <a href="hackathons.html" style="font-weight: 600; font-size: 0.875rem;">View Hackathons &rarr;</a>
         </div>
 
-        <!-- Feature 6 -->
-        <div class="card card-interactive" data-feature-id="f-6">
+        <div class="card card-interactive">
           <div class="feature-icon">📚</div>
           <h3>Resource Library</h3>
           <p style="color: var(--stone-brown); margin: 0.75rem 0 1rem; font-size: 0.925rem;">
-            Access exam revision guides, past papers, starter code templates, and design kits shared by top seniors.
+            Access exam revision guides, past papers, starter code templates, and design kits shared by students & faculty.
           </p>
           <a href="resources.html" style="font-weight: 600; font-size: 0.875rem;">Access Resources &rarr;</a>
         </div>
@@ -235,14 +225,14 @@
     <section style="margin-bottom: 4rem;">
       <div class="page-header">
         <div>
-          <h2 class="page-title">Featured Student Projects</h2>
-          <p class="page-subtitle">Innovative projects built by students on campus</p>
+          <h2 class="page-title">Featured Projects</h2>
+          <p class="page-subtitle">Innovative software & hardware built by students on campus</p>
         </div>
         <a href="projects.html" class="btn btn-outline btn-sm">View All Projects</a>
       </div>
 
       <div class="grid grid-cols-2" id="featured-projects-grid">
-        <!-- Rendered dynamically from mock data -->
+        <div style="grid-column: span 2; text-align: center; padding: 2rem; color: var(--stone-brown);">Loading featured projects...</div>
       </div>
     </section>
 
@@ -250,10 +240,10 @@
     <div class="card" style="background-color: var(--night-bordeaux-light); border-color: var(--dusty-taupe); text-align: center; padding: 3rem 2rem;">
       <h2 style="color: var(--night-bordeaux); font-size: 2rem;">Ready to Build Your Next Big Project?</h2>
       <p style="color: var(--stone-brown); max-width: 580px; margin: 0.75rem auto 1.5rem;">
-        Join CampusConnect today, setup your student profile, and connect with peer developers, designers, and researchers.
+        Join CampusConnect today, set up your profile, and connect with peer developers, designers, and researchers.
       </p>
       <div style="display: flex; gap: 1rem; justify-content: center;">
-        <a href="register.html" class="btn btn-primary">Create Student Account</a>
+        <a href="register.html" class="btn btn-primary">Create Free Account</a>
         <a href="login.html" class="btn btn-outline">Sign In</a>
       </div>
     </div>
@@ -264,30 +254,44 @@
   <div id="main-footer"></div>
 
   <!-- JavaScript dependencies -->
-  <script src="js/mock-data.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // Render 2 featured projects
-      const grid = document.getElementById("featured-projects-grid");
-      if (grid && MOCK_DATA.projects) {
-        grid.innerHTML = MOCK_DATA.projects.slice(0, 2).map(p => `
-          <div class="card card-interactive" data-project-id="${p.id}">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-              <span class="badge badge-bordeaux">${p.category}</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">★ ${p.stars} Stars</span>
-            </div>
-            <h3 style="margin-bottom: 0.5rem;"><a href="project-detail.html?id=${p.id}">${p.title}</a></h3>
-            <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1rem;">${p.description}</p>
-            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-              ${p.techStack.slice(0, 4).map(t => `<span class="badge badge-taupe">${t}</span>`).join('')}
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-              <span style="font-size: 0.825rem; color: var(--stone-brown);">By ${p.author}</span>
-              <a href="project-detail.html?id=${p.id}" class="btn btn-sm btn-outline">View Details</a>
-            </div>
-          </div>
-        `).join('');
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const projects = await apiGet("/api/projects");
+        const grid = document.getElementById("featured-projects-grid");
+        if (grid && projects && projects.length > 0) {
+          grid.innerHTML = projects.slice(0, 2).map(p => {
+            const stack = p.techStack ? p.techStack.split(',').map(s => s.trim()).filter(Boolean).slice(0, 4) : [];
+            const author = p.owner ? p.owner.username : 'Student';
+
+            return `
+              <div class="card card-interactive" data-project-id="${p.id}">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                  <span class="badge badge-bordeaux">${p.status || 'ACTIVE'}</span>
+                  <span style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">${formatTimeAgo(p.createdAt)}</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;"><a href="project-detail.html?id=${p.id}" style="color: var(--night-bordeaux);">${p.title}</a></h3>
+                <p style="color: var(--stone-brown); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">${p.description}</p>
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                  ${stack.map(t => `<span class="badge badge-taupe">${t}</span>`).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                  <span style="font-size: 0.825rem; color: var(--stone-brown);">Lead: @${author}</span>
+                  <a href="project-detail.html?id=${p.id}" class="btn btn-sm btn-outline">View Details</a>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Live stats update
+        if (projects) document.getElementById("stat-projects").innerText = `${projects.length}+`;
+        const dir = await apiGet("/api/directory").catch(() => []);
+        if (dir) document.getElementById("stat-students").innerText = `${dir.length}+`;
+      } catch (e) {
+        console.error("Home page data load error", e);
       }
     });
   </script>

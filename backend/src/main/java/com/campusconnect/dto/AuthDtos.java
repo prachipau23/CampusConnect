@@ -22,6 +22,10 @@ public class AuthDtos {
 
         private String fullName;
         private String role; // defaults to STUDENT if blank
+        private String department;
+        private String yearOfStudy;
+        private String skills;
+        private String bio;
     }
 
     @Data

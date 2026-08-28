@@ -31,6 +31,14 @@ public class HackathonController {
         return ResponseEntity.ok(hackathonService.create(body));
     }
 
+    @PostMapping("/{id}/register")
+    public ResponseEntity<com.campusconnect.entity.Team> registerTeam(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            org.springframework.security.core.Authentication auth) {
+        return ResponseEntity.ok(hackathonService.registerTeam(id, body, auth.getName()));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
         hackathonService.delete(id);
