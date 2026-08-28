@@ -36,7 +36,8 @@ public class HackathonController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body,
             org.springframework.security.core.Authentication auth) {
-        return ResponseEntity.ok(hackathonService.registerTeam(id, body, auth.getName()));
+        String username = (auth != null && auth.getName() != null) ? auth.getName() : "anonymous";
+        return ResponseEntity.ok(hackathonService.registerTeam(id, body, username));
     }
 
     @DeleteMapping("/{id}")

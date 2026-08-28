@@ -53,6 +53,7 @@ public class HackathonService {
     public com.campusconnect.entity.Team registerTeam(Long hackathonId, Map<String, Object> body, String userEmail) {
         Hackathon h = getById(hackathonId);
         com.campusconnect.entity.User user = userRepository.findByEmail(userEmail)
+                .or(() -> userRepository.findByUsername(userEmail))
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userEmail));
 
         String teamName = (String) body.getOrDefault("teamName", "Team " + user.getUsername());

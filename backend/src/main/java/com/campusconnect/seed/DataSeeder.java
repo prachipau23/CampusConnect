@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -53,8 +54,8 @@ public class DataSeeder implements CommandLineRunner {
                 students = seedStudents();
                 admins = seedAdmins();
             } else {
-                students = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.STUDENT).toList();
-                admins = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.TEACHER).toList();
+                students = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.STUDENT).collect(Collectors.toList());
+                admins = userRepository.findAll().stream().filter(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.TEACHER).collect(Collectors.toList());
             }
 
             if (projectRepository.count() == 0 && !students.isEmpty()) {
