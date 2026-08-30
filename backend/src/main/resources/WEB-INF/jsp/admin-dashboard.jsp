@@ -29,7 +29,17 @@
     <p style="margin:0.25rem 0 0; font-size:0.9rem; opacity:0.8;">Student Performance Overview</p>
 </div>
 <div class="container">
-    <h2>All Students (${profiles.size()} total)</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Students Overview (${profiles.size()} total)</h2>
+        <form action="<c:url value='/views/admin/dashboard'/>" method="get" style="display: flex; gap: 0.75rem; align-items: center; background: white; padding: 0.5rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+            <label style="font-size: 0.85rem; font-weight: bold; color: #555;">Filter GPA:</label>
+            <input type="number" name="minGpa" step="0.1" min="0" max="10" placeholder="Min" value="${minGpa}" style="width: 70px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <span>-</span>
+            <input type="number" name="maxGpa" step="0.1" min="0" max="10" placeholder="Max" value="${maxGpa}" style="width: 70px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button type="submit" style="background: #2c3e50; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Filter</button>
+            <a href="<c:url value='/views/admin/dashboard'/>" style="color: #666; font-size: 0.85rem; text-decoration: none; margin-left: 0.25rem;">Clear</a>
+        </form>
+    </div>
     <table>
         <thead>
             <tr>
@@ -38,6 +48,7 @@
                 <th>Department</th>
                 <th>Year</th>
                 <th>GPA</th>
+                <th>Resume</th>
                 <th>Performance Notes</th>
                 <th>Skills</th>
             </tr>
@@ -46,7 +57,7 @@
         <c:forEach var="profile" items="${profiles}" varStatus="loop">
             <tr>
                 <td>${loop.count}</td>
-                <td>${profile.fullName}</td>
+                <td><strong>${profile.fullName}</strong></td>
                 <td>${profile.department}</td>
                 <td>${profile.yearOfStudy}</td>
                 <td>
@@ -59,6 +70,18 @@
                         </c:when>
                         <c:otherwise>
                             <span class="gpa-low">${profile.gpa != null ? profile.gpa : 'N/A'}</span>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td>
+                    <c:choose>
+                        <c:when test="${not empty profile.resumeFileName}">
+                            <a href="<c:url value='/api/admin/students/${profile.id}/resume/download'/>" style="display: inline-flex; align-items: center; gap: 4px; color: #2980b9; text-decoration: none; font-weight: 600; font-size: 0.85rem;" title="${profile.resumeFileName}">
+                                📄 Download
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                            <span style="color: #bbb; font-size: 0.8rem;">None</span>
                         </c:otherwise>
                     </c:choose>
                 </td>

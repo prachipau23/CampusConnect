@@ -21,6 +21,26 @@
       </div>
     </div>
 
+    <!-- Teacher / Admin CGPA Filter Bar -->
+    <div id="teacher-gpa-filter-bar" style="display: none; background: var(--white-smoke); border: 1px solid var(--dusty-taupe); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
+      <div style="font-weight: 700; font-size: 0.95rem; color: var(--night-bordeaux); display: flex; align-items: center; gap: 0.4rem;">
+        <span>🎓</span>
+        <span>Student GPA Filter:</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="min-gpa" style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">Min GPA:</label>
+        <input type="number" id="min-gpa" class="form-control" style="width: 100px; padding: 0.4rem 0.6rem;" min="0" max="10" step="0.1" placeholder="e.g. 7.5">
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="max-gpa" style="font-size: 0.85rem; font-weight: 600; color: var(--stone-brown);">Max GPA:</label>
+        <input type="number" id="max-gpa" class="form-control" style="width: 100px; padding: 0.4rem 0.6rem;" min="0" max="10" step="0.1" placeholder="e.g. 10.0">
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-sm btn-primary" onclick="applyGpaFilter()">Apply Filter</button>
+        <button class="btn btn-sm btn-outline" onclick="clearGpaFilter()">Clear Filter</button>
+      </div>
+    </div>
+
     <!-- Search & Filters -->
     <div class="filter-bar">
       <div class="search-input-wrapper">
@@ -59,23 +79,62 @@
   <script src="js/main.js"></script>
   <script>
     let directoryList = [];
+    let isPrivilegedUser = false;
 
     document.addEventListener("DOMContentLoaded", () => {
+      const storedUser = getStoredUser();
+      isPrivilegedUser = storedUser && (storedUser.role === 'TEACHER' || storedUser.role === 'ADMIN' || storedUser.role === 'MENTOR');
+
+      const filterBar = document.getElementById("teacher-gpa-filter-bar");
+      if (filterBar) {
+        filterBar.style.display = isPrivilegedUser ? "flex" : "none";
+      }
+
       loadDirectory();
     });
 
-    async function loadDirectory() {
+    async function loadDirectory(params = "") {
       try {
-        directoryList = await apiGet("/api/directory");
+        if (isPrivilegedUser) {
+          directoryList = await apiGet(`/api/admin/students${params}`);
+        } else {
+          directoryList = await apiGet("/api/directory");
+        }
         renderDirectory(directoryList);
       } catch (err) {
-        document.getElementById("directory-grid").innerHTML = `
-          <div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
-            <h3>Error loading directory</h3>
-            <p style="color: var(--stone-brown);">${err.message}</p>
-          </div>
-        `;
+        // Fallback to public directory if admin route returns 403
+        try {
+          directoryList = await apiGet("/api/directory");
+          renderDirectory(directoryList);
+        } catch (innerErr) {
+          document.getElementById("directory-grid").innerHTML = `
+            <div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
+              <h3>Error loading directory</h3>
+              <p style="color: var(--stone-brown);">${innerErr.message}</p>
+            </div>
+          `;
+        }
       }
+    }
+
+    function applyGpaFilter() {
+      const minVal = document.getElementById("min-gpa").value.trim();
+      const maxVal = document.getElementById("max-gpa").value.trim();
+
+      const queryParams = new URLSearchParams();
+      if (minVal) queryParams.append("minGpa", minVal);
+      if (maxVal) queryParams.append("maxGpa", maxVal);
+
+      const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+      showToast("Applying GPA filter...", "info");
+      loadDirectory(queryString);
+    }
+
+    function clearGpaFilter() {
+      document.getElementById("min-gpa").value = "";
+      document.getElementById("max-gpa").value = "";
+      showToast("Cleared GPA filter", "info");
+      loadDirectory();
     }
 
     function renderDirectory(list) {
@@ -85,7 +144,7 @@
       if (!list || list.length === 0) {
         grid.innerHTML = `<div class="card" style="grid-column: span 3; text-align: center; padding: 3rem;">
           <h3>No profiles found</h3>
-          <p style="color: var(--stone-brown);">Try a different search query or filter.</p>
+          <p style="color: var(--stone-brown);">Try a different search query or GPA range.</p>
         </div>`;
         return;
       }
@@ -94,6 +153,7 @@
         const initials = p.avatarInitials || (p.fullName ? p.fullName.substring(0, 2).toUpperCase() : "CC");
         const skillsArr = p.skills ? p.skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3) : [];
         const isFaculty = p.user && (p.user.role === 'TEACHER' || p.user.role === 'ADMIN' || p.user.role === 'MENTOR');
+        const hasResume = p.resumeFileName && p.resumeFileName.trim().length > 0;
 
         return `
           <div class="card card-interactive" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -109,9 +169,12 @@
               ${p.department || 'General Department'}
             </p>
 
-            <span class="badge ${isFaculty ? 'badge-dark' : 'badge-bordeaux'}" style="margin-bottom: 1rem;">
-              ${isFaculty ? (p.user.role === 'ADMIN' ? 'Administrator' : 'Faculty / Mentor') : (p.yearOfStudy || 'Student')}
-            </span>
+            <div style="display: flex; gap: 0.4rem; justify-content: center; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap;">
+              <span class="badge ${isFaculty ? 'badge-dark' : 'badge-bordeaux'}">
+                ${isFaculty ? (p.user.role === 'ADMIN' ? 'Administrator' : 'Faculty / Mentor') : (p.yearOfStudy || 'Student')}
+              </span>
+              ${p.gpa != null ? `<span class="badge badge-taupe" style="font-weight: 700;">GPA: ${p.gpa}</span>` : ''}
+            </div>
 
             <p style="color: var(--stone-brown); font-size: 0.825rem; line-height: 1.4; margin-bottom: 1rem; max-height: 42px; overflow: hidden; text-overflow: ellipsis;">
               ${p.bio || 'Campus community member.'}
@@ -121,14 +184,47 @@
               ${skillsArr.map(s => `<span class="badge badge-taupe" style="font-size: 0.75rem;">${s}</span>`).join('')}
             </div>
 
-            <div style="margin-top: auto; width: 100%; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+            <div style="margin-top: auto; width: 100%; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem;">
               <a href="profile.html?userId=${p.user ? p.user.id : ''}" class="btn btn-sm btn-outline" style="width: 100%;">
                 View Profile &rarr;
               </a>
+              ${(hasResume && isPrivilegedUser) ? `
+                <button type="button" class="btn btn-sm btn-primary" style="width: 100%; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;" onclick="downloadResumeDirect(${p.id}, '${p.resumeFileName}')">
+                  📄 Download Resume
+                </button>
+              ` : ''}
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    async function downloadResumeDirect(profileId, defaultFileName) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/students/${profileId}/resume/download`, {
+          headers: authHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not download student resume");
+        }
+
+        const blob = await response.blob();
+        const filename = defaultFileName || "student_resume.pdf";
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast("Resume download started!", "success");
+      } catch (err) {
+        showToast(err.message || "Failed to download resume", "error");
+      }
     }
 
     function filterDirectory() {

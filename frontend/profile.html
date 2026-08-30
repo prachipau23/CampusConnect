@@ -91,6 +91,15 @@
             </a>
           </div>
         </div>
+
+        <!-- Student Resume Section -->
+        <div id="profile-resume-section" style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-top: 1.25rem;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--stone-brown); margin-bottom: 0.75rem; letter-spacing: 0.05em;">Curriculum Vitae / Resume</h4>
+          <div id="resume-container">
+            <!-- Dynamically populated -->
+          </div>
+          <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;" onchange="handleResumeFileSelected(event)">
+        </div>
       </div>
 
       <!-- Right Col: Profile View / Edit Form -->
@@ -270,6 +279,189 @@
       document.getElementById("edit-bio").value = p.bio || "";
       document.getElementById("edit-github").value = p.githubUrl || "";
       document.getElementById("edit-linkedin").value = p.linkedinUrl || "";
+
+      // Render Resume Section
+      renderResumeSection(p);
+    }
+
+    function renderResumeSection(p) {
+      const container = document.getElementById("resume-container");
+      if (!container) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const userIdParam = urlParams.get("userId");
+      const storedUser = getStoredUser();
+      const isViewingOther = userIdParam && storedUser && storedUser.id != userIdParam;
+      const isPrivileged = storedUser && (storedUser.role === 'ADMIN' || storedUser.role === 'TEACHER' || storedUser.role === 'MENTOR');
+
+      const hasResume = p.resumeFileName && p.resumeFileName.trim().length > 0;
+
+      if (isViewingOther) {
+        if (hasResume && isPrivileged) {
+          container.innerHTML = `
+            <div style="background: var(--white-smoke); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+              <div style="font-weight: 600; color: var(--black); margin-bottom: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                📄 ${p.resumeFileName}
+              </div>
+              <button type="button" class="btn btn-sm btn-primary" style="width: 100%; font-size: 0.8rem;" onclick="downloadResumeAsAdmin(${p.id}, '${p.resumeFileName}')">
+                📥 Download Student Resume
+              </button>
+            </div>
+          `;
+        } else if (hasResume) {
+          container.innerHTML = `
+            <p style="font-size: 0.85rem; color: var(--stone-brown); margin: 0;">
+              📄 Resume uploaded (Confidential)
+            </p>
+          `;
+        } else {
+          container.innerHTML = `
+            <p style="font-size: 0.85rem; color: var(--stone-brown); margin: 0;">
+              No resume uploaded.
+            </p>
+          `;
+        }
+        return;
+      }
+
+      // Own profile view
+      if (hasResume) {
+        container.innerHTML = `
+          <div style="background: var(--white-smoke); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: var(--black); margin-bottom: 0.6rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span>📄</span>
+              <span title="${p.resumeFileName}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.resumeFileName}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+              <button type="button" class="btn btn-sm btn-primary" style="width: 100%; font-size: 0.8rem;" onclick="downloadMyResume()">
+                📥 Download Resume
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" style="width: 100%; font-size: 0.8rem;" onclick="triggerResumeUpload()">
+                🔄 Replace Resume
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="font-size: 0.85rem; color: var(--stone-brown); margin-bottom: 0.6rem;">
+            No resume uploaded yet (PDF, DOC, DOCX up to 5MB).
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" style="width: 100%; font-size: 0.8rem;" onclick="triggerResumeUpload()">
+            📄 Upload Resume
+          </button>
+        `;
+      }
+    }
+
+    function triggerResumeUpload() {
+      const input = document.getElementById("resume-file-input");
+      if (input) {
+        input.value = "";
+        input.click();
+      }
+    }
+
+    async function handleResumeFileSelected(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const allowedExts = [".pdf", ".doc", ".docx"];
+      const fileName = file.name.toLowerCase();
+      const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+
+      if (!isValidExt) {
+        showToast("Only PDF, DOC, and DOCX files are allowed.", "error");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast("File exceeds the maximum 5MB size limit.", "error");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      showToast("Uploading resume...", "info");
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/profiles/resume`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${getAuthToken()}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || errData.message || "Failed to upload resume");
+        }
+
+        const updatedProfile = await response.json();
+        currentProfile = updatedProfile;
+        renderResumeSection(updatedProfile);
+        showToast("Resume uploaded successfully! 🎉", "success");
+      } catch (err) {
+        showToast(err.message || "Upload failed. Please try again.", "error");
+      }
+    }
+
+    async function downloadMyResume() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/profiles/resume/download`, {
+          headers: authHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not download resume");
+        }
+
+        const blob = await response.blob();
+        const filename = (currentProfile && currentProfile.resumeFileName) ? currentProfile.resumeFileName : "resume.pdf";
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast("Resume download started!", "success");
+      } catch (err) {
+        showToast(err.message || "Failed to download resume", "error");
+      }
+    }
+
+    async function downloadResumeAsAdmin(profileId, defaultFileName) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/students/${profileId}/resume/download`, {
+          headers: authHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not download student resume");
+        }
+
+        const blob = await response.blob();
+        const filename = defaultFileName || "student_resume.pdf";
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast("Student resume download started!", "success");
+      } catch (err) {
+        showToast(err.message || "Failed to download student resume", "error");
+      }
     }
 
     function toggleEditMode() {
