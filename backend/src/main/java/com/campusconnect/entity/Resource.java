@@ -29,7 +29,7 @@ public class Resource {
     private String originalFileName;
 
     @JsonIgnore
-    @Lob
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARBINARY)
     @Column(nullable = false, columnDefinition = "BYTEA")
     private byte[] fileData;
 

@@ -37,7 +37,7 @@ public class StudentProfile {
     private String resumeFileType;
 
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @Lob
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARBINARY)
     @Column(name = "resume_data", columnDefinition = "BYTEA")
     private byte[] resumeData;
 
